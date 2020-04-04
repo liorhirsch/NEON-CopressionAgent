@@ -11,12 +11,16 @@ def load_models_path(main_path):
             continue
         train_data_path = root + '/X_to_train.csv'
 
-        model_files = list(filter(lambda file_name: file_name.endswith('.pt'), files))
+        model_files = list(map(lambda file: os.path.join(root, file),
+                               filter(lambda file_name: file_name.endswith('.pt'), files)))
         model_paths.append((train_data_path, *model_files))
 
     return model_paths
 
 
-models_path = load_models_path()
+models_path = load_models_path("./Fully Connected Training/")
 
 network_env = NetworkEnv(models_path)
+
+network_env.reset()
+network_env.step(0.5)
