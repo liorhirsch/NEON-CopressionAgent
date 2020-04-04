@@ -1,5 +1,6 @@
 import os
 
+from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX
 from src.NetworkEnv import NetworkEnv
 
 
@@ -13,7 +14,7 @@ def load_models_path(main_path):
 
         model_files = list(map(lambda file: os.path.join(root, file),
                                filter(lambda file_name: file_name.endswith('.pt'), files)))
-        model_paths.append((train_data_path, *model_files))
+        model_paths.append((train_data_path, model_files))
 
     return model_paths
 
