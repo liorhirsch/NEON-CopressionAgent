@@ -72,20 +72,32 @@ class NetworkEnv:
 
         parameters_to_freeze_ids = self.build_parameters_to_freeze(new_model_with_rows)
 
+        # train network
         learning_handler_new_model.freeze_layers(parameters_to_freeze_ids)
-
         learning_handler_new_model.train_model()
         new_acc = learning_handler_new_model.evaluate_model()
 
-        # train network
+        # compute reward
+        reward = self.compute_reward(self.current_model, learning_handler_new_model.model, new_acc, prev_acc)
+
         self.layer_index += 1
         self.current_model = learning_handler_new_model.model
 
-        return new_model
 
-        # calculate accuracy on the new model
-        # compute reward
         # get FM for the new model and the next layer.
+        self.feature_extractor = FeatureExtractor(self.current_model, self.X_data._values)
+        fm = self.feature_extractor.extract_features(self.layer_index)
+        return fm, reward
+
+    def compute_reward(self, curr_model, new_model, new_acc, prev_acc):
+        current_model_parameter_num = self.calc_num_parameters(curr_model)
+        new_model_parameter_num = self.calc_num_parameters(new_model)
+        C = 1 - (new_model_parameter_num / current_model_parameter_num)
+        reward = C * (2 - C) * (new_acc / prev_acc)
+        return reward
+
+    def calc_num_parameters(self, model):
+        return sum(p.numel() for p in model.parameters())
 
     def build_parameters_to_freeze(self, new_model_with_rows):
         layers_to_freeze = np.concatenate(new_model_with_rows.all_rows[self.layer_index - 1:self.layer_index + 1])
