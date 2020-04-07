@@ -32,6 +32,7 @@ class RegressionHandler(BasicHandler):
         dataSet = Dataset(self.cross_validation_obj.x_train, self.cross_validation_obj.y_train)
         trainLoader = torch.utils.data.DataLoader(dataSet, batch_size=32, shuffle=True)
 
+        # TODO extract to static area
         for epoch in range(50):
             for i, batch in enumerate(trainLoader, 0):
                 curr_x, curr_y = batch
@@ -42,5 +43,3 @@ class RegressionHandler(BasicHandler):
                 loss = self.loss_func(outputs, curr_y.float())
                 loss.backward()
                 self.optimizer.step()
-
-

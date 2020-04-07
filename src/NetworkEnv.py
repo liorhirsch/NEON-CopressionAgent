@@ -78,22 +78,30 @@ class NetworkEnv:
         new_acc = learning_handler_new_model.evaluate_model()
 
         # compute reward
-        reward = self.compute_reward(self.current_model, learning_handler_new_model.model, new_acc, prev_acc)
+        reward = self.compute_reward(self.current_model, learning_handler_new_model.model, new_acc, prev_acc,
+                                     self.loaded_model.mission_type)
 
         self.layer_index += 1
         self.current_model = learning_handler_new_model.model
 
-
         # get FM for the new model and the next layer.
         self.feature_extractor = FeatureExtractor(self.current_model, self.X_data._values)
         fm = self.feature_extractor.extract_features(self.layer_index)
-        return fm, reward
 
-    def compute_reward(self, curr_model, new_model, new_acc, prev_acc):
+        # Compute done
+        done = self.layer_index + 1 == len(self.feature_extractor.model_with_rows.all_rows)
+        return fm, reward, done
+
+    def compute_reward(self, curr_model, new_model, new_acc, prev_acc, mission_type):
         current_model_parameter_num = self.calc_num_parameters(curr_model)
         new_model_parameter_num = self.calc_num_parameters(new_model)
         C = 1 - (new_model_parameter_num / current_model_parameter_num)
-        reward = C * (2 - C) * (new_acc / prev_acc)
+        reward = C * (2 - C)
+
+        if (mission_type is MissionTypes.Classification):
+            reward *= new_acc / prev_acc
+        else:
+            reward *= prev_acc / new_acc
         return reward
 
     def calc_num_parameters(self, model):
@@ -106,10 +114,10 @@ class NetworkEnv:
         return parameters_to_freeze_ids
 
     def create_learning_handler(self, new_model) -> BasicHandler:
-        return self.handler_by_mission_type[self.loaded_model.missionType](new_model,
-                                                                           self.loaded_model.loss,
-                                                                           self.loaded_model.optimizer,
-                                                                           self.cross_validation_obj)
+        return self.handler_by_mission_type[self.loaded_model.mission_type](new_model,
+                                                                            self.loaded_model.loss,
+                                                                            self.loaded_model.optimizer,
+                                                                            self.cross_validation_obj)
 
     def get_linear_layer(self, row):
         for l in row:
