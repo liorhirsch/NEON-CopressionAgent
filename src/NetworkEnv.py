@@ -37,10 +37,6 @@ class NetworkEnv:
         Reset environment with a random network and its train data
         :return: state includes the network and the train data
         """
-        # TODO check ./Fully Connected Training/Classification\disclosure_z\netX29model.pt
-        # TODO -  check ./Fully Connected Training/Regression\kc1-numeric\netX7model.pt
-        # TODO - check Selected net:  ./Fully Connected Training/Regression\ERA\netX11model(1).pt
-        # TODO check Selected net:  ./Fully Connected Training/Classification\fri_c0_250_5\netX8model.pt
         self.layer_index = 1
         selected_net_group_index = np.random.choice(len(self.networks_path), 1)[0]
         selected_net_group = self.networks_path[selected_net_group_index]
@@ -49,8 +45,8 @@ class NetworkEnv:
         selected_net_path = np.random.choice(selected_net_group[1], 1)[0]
         print("Selected net: ", selected_net_path)
 
-        selected_net_path = './Fully Connected Training/Classification\\disclosure_z\\netX29model.pt'
-        x_path = './Fully Connected Training/Classification\\disclosure_z\\X_to_train.csv'
+        # selected_net_path = './Fully Connected Training/Classification\\fri_c0_250_5\\netX8model.pt'
+        # x_path = './Fully Connected Training/Classification\\fri_c0_250_5\\X_to_train.csv'
 
 
         y_path = str.replace(x_path, 'X_to_train', 'Y_to_train')
