@@ -2,7 +2,9 @@ import os
 
 import torch
 
+# from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX - should be import!!!!
 from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX
+from src.A2C_Agent import A2C_Agent
 from src.Configuration.ConfigurationValues import ConfigurationValues
 from src.Configuration.StaticConf import StaticConf
 from src.Model.ActorCritic import ActorCritic
@@ -29,13 +31,10 @@ def init_conf_values():
     cv = ConfigurationValues(device)
     StaticConf(cv)
 
-init_conf_values()
-models_path = load_models_path("./Fully Connected Training/")
 
-network_env = NetworkEnv(models_path)
-network_env.reset()
-fm, reward, done = network_env.step(0.5)
 
-device = StaticConf.getInstance().conf_values.device
-num_actions = StaticConf.getInstance().conf_values.num_actions
-ActorCritic(device, num_actions)(fm)
+# init_conf_values()
+# models_path = load_models_path("./Fully Connected Training/")
+# agent = A2C_Agent(models_path)
+# agent.train()
+# torch.save(agent.actor_critic_model.state_dict(), "ac_model.pt")

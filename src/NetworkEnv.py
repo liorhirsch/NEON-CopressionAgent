@@ -22,11 +22,12 @@ class NetworkEnv:
     current_model: nn.Module
 
     def __init__(self, networks_path):
-        self.networks_path = networks_path
+        self.networks_path = [networks_path[0]]
         self.handler_by_mission_type: Dict[MissionTypes, Type[BasicHandler]] = {
             MissionTypes.Regression: RegressionHandler,
             MissionTypes.Classification: ClassificationHandler
         }
+
 
     def create_train_test_splits(self):
         self.cross_validation_obj = CrossValidationObject(
@@ -42,9 +43,11 @@ class NetworkEnv:
         selected_net_group = self.networks_path[selected_net_group_index]
         x_path = selected_net_group[0]
 
-        print("Selected net: ", x_path)
+        # print("Selected net: ", x_path)
         selected_net_path = np.random.choice(selected_net_group[1], 1)[0]
-        print("Selected net: ", selected_net_path)
+        selected_net_path = selected_net_group[1][0]
+        # selected_net_path = 0
+        # print("Selected net: ", selected_net_path)
 
         # selected_net_path = './Fully Connected Training/Classification\\fri_c0_250_5\zzX_to_train.csv'
 

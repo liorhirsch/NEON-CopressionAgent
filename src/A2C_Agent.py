@@ -1,111 +1,103 @@
-import math
-import random
-
-import numpy as np
-
 import torch
-import torch.nn as nn
 import torch.optim as optim
-import torch.nn.functional as F
-from torch.distributions import Categorical
-
-use_cuda = torch.cuda.is_available()
-device = torch.device("cuda" if use_cuda else "cpu")
+from torch.utils.tensorboard import SummaryWriter
 
 
-num_envs = 8
-env_name = "CartPole-v0"
+# def test_env(vis=False):
+#     state = env.reset()
+#     done = False
+#     total_reward = 0
+#     while not done:
+#         state = torch.FloatTensor(state).unsqueeze(0).to(device)
+#         dist, _ = actor_critic_model(state)
+#         next_state, reward, done, _ = env.step(dist.sample().cpu().numpy()[0])
+#         state = next_state
+#         total_reward += reward
+#     return total_reward
+from src.Configuration.StaticConf import StaticConf
+from src.Model.ActorCritic import ActorCritic
+from src.NetworkEnv import NetworkEnv
 
 
-def make_env():
-    def _thunk():
-        env = gym.make(env_name)
-        return env
+class A2C_Agent():
 
-    return _thunk
+    def __init__(self, models_path):
+        # Hyper params:
+        self.lr = 1e-3
+        self.num_steps = 10
+        self.device = StaticConf.getInstance().conf_values.device
+        self.num_actions = StaticConf.getInstance().conf_values.num_actions
+        self.num_episodes = 200
+        self.episode_idx = 0
+        self.actor_critic_model = ActorCritic(self.device, self.num_actions).to(self.device)
+        self.optimizer = optim.Adam(self.actor_critic_model.parameters())
+        self.env = NetworkEnv(models_path)
+        self.action_to_compression = {
+            0: 0.9,
+            1:0.75,
+            2: 0.6,
+            3:0.4
+        }
 
-# envs = [make_env() for i in range(num_envs)]
+    def compute_returns(self, next_value, rewards, masks, gamma=0.99):
+        R = next_value
+        returns = []
+        for step in reversed(range(len(rewards))):
+            R = rewards[step] + gamma * R * masks[step]
+            returns.insert(0, R)
+        return returns
 
-def test_env(vis=False):
-    state = env.reset()
-    done = False
-    total_reward = 0
-    while not done:
-        state = torch.FloatTensor(state).unsqueeze(0).to(device)
-        dist, _ = actor_critic_model(state)
-        next_state, reward, done, _ = env.step(dist.sample().cpu().numpy()[0])
-        state = next_state
-        total_reward += reward
-    return total_reward
+    def train(self):
+        writer = SummaryWriter()
 
+        while self.episode_idx < self.num_episodes:
+            state = self.env.reset()
+            log_probs = []
+            values = []
+            rewards = []
+            masks = []
+            entropy = 0
 
-def compute_returns(next_value, rewards, masks, gamma=0.99):
-    R = next_value
-    returns = []
-    for step in reversed(range(len(rewards))):
-        R = rewards[step] + gamma * R * masks[step]
-        returns.insert(0, R)
-    return returns
+            # rollout trajectory
+            for _ in range(self.num_steps):
+                # state = torch.FloatTensor(state).to(device)
+                dist, value = self.actor_critic_model(state)
 
+                action = dist.sample()
+                compression_rate  = self.action_to_compression[action.cpu().numpy()[0]]
+                next_state, reward, done = self.env.step(compression_rate)
 
+                log_prob = dist.log_prob(action)
+                entropy += dist.entropy().mean()
 
-num_inputs = envs.observation_space.shape[0]
-num_outputs = envs.action_space.n
+                log_probs.append(log_prob)
+                values.append(value)
+                rewards.append(torch.FloatTensor([reward]).unsqueeze(1).to(self.device))
+                masks.append(torch.FloatTensor([1 - done]).unsqueeze(1).to(self.device))
 
-# Hyper params:
-lr = 1e-3
-num_steps = 10
+                state = next_state
+                self.episode_idx += 1
 
-actor_critic_model = ActorCritic(num_inputs, num_outputs).to(device)
-optimizer = optim.Adam(actor_critic_model.parameters())
+                if done:
+                    break
 
-num_episodes = 20000
-episode_idx = 0
+            # next_state = torch.FloatTensor(next_state).to(self.device)
+            _, next_value = self.actor_critic_model(next_state)
+            returns = self.compute_returns(next_value, rewards, masks)
 
+            log_probs = torch.cat(log_probs)
+            returns = torch.cat(returns).detach()
+            values = torch.cat(values)
 
+            advantage = returns - values
 
-while episode_idx < num_episodes:
-    state = envs.reset()
-    log_probs = []
-    values = []
-    rewards = []
-    masks = []
-    entropy = 0
+            actor_loss = -(log_probs * advantage.detach()).mean()
+            critic_loss = advantage.pow(2).mean()
 
-    # rollout trajectory
-    for _ in range(num_steps):
-        state = torch.FloatTensor(state).to(device)
-        dist, value = actor_critic_model(state)
+            loss = actor_loss + 0.5 * critic_loss - 0.001 * entropy
+            loss_val = loss.data.detach().cpu().numpy().min()
+            writer.add_scalar('Loss', loss_val, self.episode_idx)
 
-        action = dist.sample()
-        next_state, reward, done, _ = envs.step(action.cpu().numpy())
-
-        log_prob = dist.log_prob(action)
-        entropy += dist.entropy().mean()
-
-        log_probs.append(log_prob)
-        values.append(value)
-        rewards.append(torch.FloatTensor(reward).unsqueeze(1).to(device))
-        masks.append(torch.FloatTensor(1 - done).unsqueeze(1).to(device))
-
-        state = next_state
-        episode_idx += 1
-
-    next_state = torch.FloatTensor(next_state).to(device)
-    _, next_value = actor_critic_model(next_state)
-    returns = compute_returns(next_value, rewards, masks)
-
-    log_probs = torch.cat(log_probs)
-    returns = torch.cat(returns).detach()
-    values = torch.cat(values)
-
-    advantage = returns - values
-
-    actor_loss = -(log_probs * advantage.detach()).mean()
-    critic_loss = advantage.pow(2).mean()
-
-    loss = actor_loss + 0.5 * critic_loss - 0.001 * entropy
-
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
