@@ -45,8 +45,7 @@ class NetworkEnv:
         selected_net_path = np.random.choice(selected_net_group[1], 1)[0]
         print("Selected net: ", selected_net_path)
 
-        # selected_net_path = './Fully Connected Training/Classification\\fri_c0_250_5\\netX8model.pt'
-        # x_path = './Fully Connected Training/Classification\\fri_c0_250_5\\X_to_train.csv'
+        # selected_net_path = './Fully Connected Training/Classification\\fri_c0_250_5\zzX_to_train.csv'
 
 
         y_path = str.replace(x_path, 'X_to_train', 'Y_to_train')
