@@ -5,6 +5,7 @@ import torch
 from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX
 from src.Configuration.ConfigurationValues import ConfigurationValues
 from src.Configuration.StaticConf import StaticConf
+from src.Model.ActorCritic import ActorCritic
 from src.NetworkEnv import NetworkEnv
 
 
@@ -32,6 +33,9 @@ init_conf_values()
 models_path = load_models_path("./Fully Connected Training/")
 
 network_env = NetworkEnv(models_path)
-
 network_env.reset()
-network_env.step(0.5)
+fm, reward, done = network_env.step(0.5)
+
+device = StaticConf.getInstance().conf_values.device
+num_actions = StaticConf.getInstance().conf_values.num_actions
+ActorCritic(device, num_actions)(fm)

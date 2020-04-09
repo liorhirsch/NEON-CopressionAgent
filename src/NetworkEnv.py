@@ -41,6 +41,7 @@ class NetworkEnv:
         selected_net_group_index = np.random.choice(len(self.networks_path), 1)[0]
         selected_net_group = self.networks_path[selected_net_group_index]
         x_path = selected_net_group[0]
+
         print("Selected net: ", x_path)
         selected_net_path = np.random.choice(selected_net_group[1], 1)[0]
         print("Selected net: ", selected_net_path)
@@ -54,7 +55,7 @@ class NetworkEnv:
         self.loaded_model, self.X_data, self.Y_data = load_model_and_data(selected_net_path, x_path, y_path, device)
         self.current_model = self.loaded_model.model
         self.feature_extractor = FeatureExtractor(self.loaded_model.model, self.X_data._values)
-        fm = self.feature_extractor.extract_features(self.layer_index)
+        fm = self.feature_extractor.extract_features(self.layer_index - 1)
         self.create_train_test_splits()
         return fm
 
@@ -91,7 +92,7 @@ class NetworkEnv:
 
         # get FM for the new model and the next layer.
         self.feature_extractor = FeatureExtractor(self.current_model, self.X_data._values)
-        fm = self.feature_extractor.extract_features(self.layer_index)
+        fm = self.feature_extractor.extract_features(self.layer_index - 1)
 
         # Compute done
         done = self.layer_index + 1 == len(self.feature_extractor.model_with_rows.all_rows)
