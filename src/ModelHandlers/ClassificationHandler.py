@@ -1,6 +1,7 @@
 import torch
 from sklearn.metrics import accuracy_score
 
+from src.Configuration.StaticConf import StaticConf
 from src.ModelHandlers.BasicHandler import BasicHandler
 
 
@@ -27,9 +28,9 @@ class Dataset(torch.utils.data.Dataset):
 
 class ClassificationHandler(BasicHandler):
     def evaluate_model(self) -> float:
-        # TODO support device - (self.cross_validation_obj.x_test).to(device)
+        device = StaticConf.getInstance().conf_values.device
         validation_output = torch.argmax(
-            self.model(torch.Tensor(self.cross_validation_obj.x_test).float()).detach().cpu(), 1)
+            self.model(torch.Tensor(self.cross_validation_obj.x_test).to(device).float()).detach().cpu(), 1)
         return accuracy_score(validation_output, self.cross_validation_obj.y_test)
 
     def train_model(self):
@@ -37,17 +38,17 @@ class ClassificationHandler(BasicHandler):
         dataSet = Dataset(self.cross_validation_obj.x_train, self.cross_validation_obj.y_train)
         trainLoader = torch.utils.data.DataLoader(dataSet, batch_size=64, shuffle=True)
         net = self.model.float()
+        device = StaticConf.getInstance().conf_values.device
 
-        for epoch in range(50):
+        for epoch in range(StaticConf.getInstance().conf_values.num_epoch):
             running_loss = 0.0
 
             for i, batch in enumerate(trainLoader, 0):
                 curr_x, curr_y = batch
                 self.optimizer.zero_grad()
-                # TODO add support for curr_x.to(device)
-                outputs = net(curr_x.float())
+
+                outputs = net(curr_x.to(device).float())
                 curr_y = torch.max(curr_y, 1)[1]
-                # TODO add support for curr_y.to(device)
-                loss = self.loss_func(outputs, curr_y)
+                loss = self.loss_func(outputs, curr_y.to(device))
                 loss.backward()
                 self.optimizer.step()

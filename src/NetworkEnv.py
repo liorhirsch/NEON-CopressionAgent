@@ -8,6 +8,7 @@ from NetworkFeatureExtration.src.FeatureExtractors.ModelFeatureExtractor import 
 from NetworkFeatureExtration.src.ModelClasses.LoadedModel import LoadedModel, MissionTypes
 from NetworkFeatureExtration.src.ModelWithRows import ModelWithRows
 from NetworkFeatureExtration.src.main import load_model_and_data
+from src.Configuration.StaticConf import StaticConf
 from src.CrossValidationObject import CrossValidationObject
 from src.ModelHandlers.BasicHandler import BasicHandler
 from src.ModelHandlers.ClassificationHandler import ClassificationHandler
@@ -36,18 +37,26 @@ class NetworkEnv:
         Reset environment with a random network and its train data
         :return: state includes the network and the train data
         """
+        # TODO check ./Fully Connected Training/Classification\disclosure_z\netX29model.pt
+        # TODO -  check ./Fully Connected Training/Regression\kc1-numeric\netX7model.pt
+        # TODO - check Selected net:  ./Fully Connected Training/Regression\ERA\netX11model(1).pt
+        # TODO check Selected net:  ./Fully Connected Training/Classification\fri_c0_250_5\netX8model.pt
         self.layer_index = 1
         selected_net_group_index = np.random.choice(len(self.networks_path), 1)[0]
         selected_net_group = self.networks_path[selected_net_group_index]
-        selected_net_path = np.random.choice(selected_net_group[1], 1)[0]
         x_path = selected_net_group[0]
-        # selected_net_path = './Fully Connected Training/Classification\\no2\\netX15model.pt'
-        # x_path = './Fully Connected Training/Classification\\no2\\X_to_train.csv'
-
+        print("Selected net: ", x_path)
+        selected_net_path = np.random.choice(selected_net_group[1], 1)[0]
         print("Selected net: ", selected_net_path)
+
+        selected_net_path = './Fully Connected Training/Classification\\disclosure_z\\netX29model.pt'
+        x_path = './Fully Connected Training/Classification\\disclosure_z\\X_to_train.csv'
+
+
         y_path = str.replace(x_path, 'X_to_train', 'Y_to_train')
 
-        self.loaded_model, self.X_data, self.Y_data = load_model_and_data(selected_net_path, x_path, y_path)
+        device = StaticConf.getInstance().conf_values.device
+        self.loaded_model, self.X_data, self.Y_data = load_model_and_data(selected_net_path, x_path, y_path, device)
         self.current_model = self.loaded_model.model
         self.feature_extractor = FeatureExtractor(self.loaded_model.model, self.X_data._values)
         fm = self.feature_extractor.extract_features(self.layer_index)
@@ -82,6 +91,7 @@ class NetworkEnv:
                                      self.loaded_model.mission_type)
 
         self.layer_index += 1
+        learning_handler_new_model.unfreeze_all_layers()
         self.current_model = learning_handler_new_model.model
 
         # get FM for the new model and the next layer.

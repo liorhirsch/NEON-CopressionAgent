@@ -26,3 +26,6 @@ class BasicHandler():
             else:
                 curr_l.requires_grad = False
 
+    def unfreeze_all_layers(self):
+        for curr_l in self.model.parameters():
+            curr_l.requires_grad = True

@@ -1,6 +1,10 @@
 import os
 
+import torch
+
 from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX
+from src.Configuration.ConfigurationValues import ConfigurationValues
+from src.Configuration.StaticConf import StaticConf
 from src.NetworkEnv import NetworkEnv
 
 
@@ -19,6 +23,12 @@ def load_models_path(main_path):
     return model_paths
 
 
+def init_conf_values():
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    cv = ConfigurationValues(device)
+    StaticConf(cv)
+
+init_conf_values()
 models_path = load_models_path("./Fully Connected Training/")
 
 network_env = NetworkEnv(models_path)
