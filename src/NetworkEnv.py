@@ -45,11 +45,11 @@ class NetworkEnv:
 
         # print("Selected net: ", x_path)
         selected_net_path = np.random.choice(selected_net_group[1], 1)[0]
-        selected_net_path = selected_net_group[1][0]
+        # selected_net_path = selected_net_group[1][0]
         # selected_net_path = 0
-        # print("Selected net: ", selected_net_path)
+        print("Selected net: ", selected_net_path)
 
-        # selected_net_path = './Fully Connected Training/Classification\\fri_c0_250_5\zzX_to_train.csv'
+        selected_net_path = './Fully Connected Training/Classification\\ar4\\netX20model.pt'
 
 
         y_path = str.replace(x_path, 'X_to_train', 'Y_to_train')
@@ -98,7 +98,7 @@ class NetworkEnv:
         fm = self.feature_extractor.extract_features(self.layer_index - 1)
 
         # Compute done
-        done = self.layer_index + 1 == len(self.feature_extractor.model_with_rows.all_rows)
+        done = self.layer_index == len(self.feature_extractor.model_with_rows.all_rows)
         return fm, reward, done
 
     def compute_reward(self, curr_model, new_model, new_acc, prev_acc, mission_type):

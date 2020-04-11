@@ -1,7 +1,7 @@
 import os
 
 import torch
-
+import numpy as np
 # from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX - should be import!!!!
 from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX
 from src.A2C_Agent import A2C_Agent
@@ -32,9 +32,12 @@ def init_conf_values():
     StaticConf(cv)
 
 
+torch.manual_seed(0)
+np.random.seed(0)
 
-# init_conf_values()
-# models_path = load_models_path("./Fully Connected Training/")
-# agent = A2C_Agent(models_path)
-# agent.train()
-# torch.save(agent.actor_critic_model.state_dict(), "ac_model.pt")
+
+init_conf_values()
+models_path = load_models_path("./Fully Connected Training/")
+agent = A2C_Agent(models_path)
+agent.train()
+torch.save(agent.actor_critic_model.state_dict(), "ac_model.pt")

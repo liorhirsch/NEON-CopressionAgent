@@ -8,9 +8,9 @@ class Flatten(nn.Module):
     def forward(self, x):
         return x.view(x.size()[0], -1)
 
-class ActorCritic(nn.Module):
+class Actor(nn.Module):
     def __init__(self, device, num_outputs):
-        super(ActorCritic, self).__init__()
+        super(Actor, self).__init__()
 
         self.device = device
 
@@ -83,15 +83,6 @@ class ActorCritic(nn.Module):
             Flatten()
         )
 
-
-        self.critic = nn.Sequential(
-            nn.Linear(170, 300),
-            nn.ReLU(),
-            nn.Linear(300, 300),
-            nn.ReLU(),
-            nn.Linear(300, 1)
-        )
-
         self.actor = nn.Sequential(
             nn.Linear(170, 300),
             nn.ReLU(),
@@ -121,10 +112,9 @@ class ActorCritic(nn.Module):
             activations_layer_features
         ),1)
 
-        value = self.critic(features_concat)
         probs = self.actor(features_concat)
         dist = Categorical(probs)
-        return dist, value
+        return dist
 
     def convert_to_tensor(self, np_ar) -> torch.Tensor:
         return torch.Tensor(np_ar).to(self.device).float().unsqueeze(0)

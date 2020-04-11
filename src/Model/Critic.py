@@ -8,9 +8,9 @@ class Flatten(nn.Module):
     def forward(self, x):
         return x.view(x.size()[0], -1)
 
-class ActorCritic(nn.Module):
+class Critic(nn.Module):
     def __init__(self, device, num_outputs):
-        super(ActorCritic, self).__init__()
+        super(Critic, self).__init__()
 
         self.device = device
 
@@ -92,15 +92,6 @@ class ActorCritic(nn.Module):
             nn.Linear(300, 1)
         )
 
-        self.actor = nn.Sequential(
-            nn.Linear(170, 300),
-            nn.ReLU(),
-            nn.Linear(300, 300),
-            nn.ReLU(),
-            nn.Linear(300, num_outputs),
-            nn.Softmax(dim=1),
-        )
-
     def forward(self, x):
         fm_splitted = self.split_fm(x)
 
@@ -122,9 +113,7 @@ class ActorCritic(nn.Module):
         ),1)
 
         value = self.critic(features_concat)
-        probs = self.actor(features_concat)
-        dist = Categorical(probs)
-        return dist, value
+        return value
 
     def convert_to_tensor(self, np_ar) -> torch.Tensor:
         return torch.Tensor(np_ar).to(self.device).float().unsqueeze(0)
