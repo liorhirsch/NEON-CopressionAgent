@@ -96,12 +96,12 @@ class Actor(nn.Module):
         fm_splitted = self.split_fm(x)
 
         arch_net_features = self.architecture_network(self.convert_to_tensor(fm_splitted[0]).unsqueeze(0))
-        weights_net_features = self.weights_network(self.convert_to_tensor(fm_splitted[2]))
-        activations_net_features = self.activation_network(self.convert_to_tensor(fm_splitted[4]))
+        activations_net_features = self.activation_network(self.convert_to_tensor(fm_splitted[2]))
+        weights_net_features = self.weights_network(self.convert_to_tensor(fm_splitted[4]))
 
         arch_layer_features = self.architecture_layer(self.convert_to_tensor(fm_splitted[1]).unsqueeze(0).unsqueeze(0))
-        weights_layer_features = self.weights_layer(self.convert_to_tensor(fm_splitted[3]).unsqueeze(0))
-        activations_layer_features = self.activation_layer(self.convert_to_tensor(fm_splitted[5]).unsqueeze(0))
+        activations_layer_features = self.activation_layer(self.convert_to_tensor(fm_splitted[3]).unsqueeze(0))
+        weights_layer_features = self.weights_layer(self.convert_to_tensor(fm_splitted[5]).unsqueeze(0))
 
         features_concat = torch.cat((
             arch_net_features,

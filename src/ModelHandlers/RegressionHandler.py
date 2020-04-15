@@ -37,8 +37,10 @@ class RegressionHandler(BasicHandler):
         for epoch in range(StaticConf.getInstance().conf_values.num_epoch):
             for i, batch in enumerate(trainLoader, 0):
                 curr_x, curr_y = batch
-                self.optimizer.zero_grad()
-                outputs = self.model(curr_x.to(device).float()).reshape(-1)
-                loss = self.loss_func(outputs, curr_y.to(device).float())
-                loss.backward()
-                self.optimizer.step()
+
+                if len(curr_x) > 1:
+                    self.optimizer.zero_grad()
+                    outputs = self.model(curr_x.to(device).float())
+                    loss = self.loss_func(outputs, curr_y.to(device).float())
+                    loss.backward()
+                    self.optimizer.step()

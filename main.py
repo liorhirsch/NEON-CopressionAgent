@@ -4,6 +4,7 @@ import torch
 import numpy as np
 # from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX - should be import!!!!
 from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX
+from NetworkFeatureExtration.src.main import load_checkpoint
 from src.A2C_Agent import A2C_Agent
 from src.Configuration.ConfigurationValues import ConfigurationValues
 from src.Configuration.StaticConf import StaticConf

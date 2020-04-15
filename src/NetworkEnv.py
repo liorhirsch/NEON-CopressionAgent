@@ -22,7 +22,8 @@ class NetworkEnv:
     current_model: nn.Module
 
     def __init__(self, networks_path):
-        self.networks_path = [networks_path[0]]
+        # self.networks_path = [networks_path[0]]
+        self.networks_path = networks_path
         self.handler_by_mission_type: Dict[MissionTypes, Type[BasicHandler]] = {
             MissionTypes.Regression: RegressionHandler,
             MissionTypes.Classification: ClassificationHandler
@@ -48,9 +49,6 @@ class NetworkEnv:
         # selected_net_path = selected_net_group[1][0]
         # selected_net_path = 0
         print("Selected net: ", selected_net_path)
-
-        selected_net_path = './Fully Connected Training/Classification\\ar4\\netX20model.pt'
-
 
         y_path = str.replace(x_path, 'X_to_train', 'Y_to_train')
 
