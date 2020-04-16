@@ -22,7 +22,7 @@ from src.NetworkEnv import NetworkEnv
 from src.PrioritizedReplay import PrioritizedReplayMemory
 
 
-class A2C_Agent():
+class A2C_Agent_Reinforce():
     # , experience_replay_size, priority_alpha, priority_beta_start, priority_beta_frames
     def __init__(self, models_path):
         # Hyper params:
@@ -31,7 +31,7 @@ class A2C_Agent():
         self.num_steps = 10
         self.device = StaticConf.getInstance().conf_values.device
         self.num_actions = StaticConf.getInstance().conf_values.num_actions
-        self.num_episodes = 1000
+        self.num_episodes = 100
         self.episode_idx = 0
         # self.actor_critic_model = ActorCritic(self.device, self.num_actions).to(self.device)
         # self.optimizer = optim.Adam(self.actor_critic_model.parameters(), self.lr)
@@ -47,9 +47,9 @@ class A2C_Agent():
 
         self.action_to_compression = {
             0: 0.9,
-            1: 0.75,
-            2: 0.6,
-            3: 0.4
+            1: 0.8,
+            2: 0.7,
+            3: 0.6
         }
 
     def compute_returns(self, next_value, rewards, masks, gamma=0.99):

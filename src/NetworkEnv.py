@@ -23,7 +23,19 @@ class NetworkEnv:
 
     def __init__(self, networks_path):
         # self.networks_path = [networks_path[0]]
+        self.all_networks = []
         self.networks_path = networks_path
+        for group in networks_path:
+            x_path = group[0]
+            nets = group[1]
+
+            for n in nets:
+                self.all_networks.append((x_path, n))
+
+        self.curr_net_index = -1
+        self.net_order = list(range(0, len(self.all_networks)))
+        np.random.shuffle(self.net_order)
+
         self.handler_by_mission_type: Dict[MissionTypes, Type[BasicHandler]] = {
             MissionTypes.Regression: RegressionHandler,
             MissionTypes.Classification: ClassificationHandler
@@ -40,15 +52,20 @@ class NetworkEnv:
         :return: state includes the network and the train data
         """
         self.layer_index = 1
-        selected_net_group_index = np.random.choice(len(self.networks_path), 1)[0]
-        selected_net_group = self.networks_path[selected_net_group_index]
-        x_path = selected_net_group[0]
+        # selected_net_group_index = np.random.choice(len(self.networks_path), 1)[0]
+        # selected_net_group = self.networks_path[selected_net_group_index]
+        # x_path = selected_net_group[0]
+        # selected_net_path = np.random.choice(selected_net_group[1], 1)[0]
 
         # print("Selected net: ", x_path)
-        selected_net_path = np.random.choice(selected_net_group[1], 1)[0]
+
         # selected_net_path = selected_net_group[1][0]
         # selected_net_path = 0
-        print("Selected net: ", selected_net_path)
+        # print("Selected net: ", selected_net_path)
+        self.curr_net_index += 1
+        self.curr_net_index = self.curr_net_index % len(self.net_order)
+        curr_group_index = self.net_order[self.curr_net_index]
+        x_path, selected_net_path = self.all_networks[curr_group_index]
 
         y_path = str.replace(x_path, 'X_to_train', 'Y_to_train')
 
@@ -84,8 +101,8 @@ class NetworkEnv:
         new_acc = learning_handler_new_model.evaluate_model()
 
         # compute reward
-        reward = self.compute_reward(self.current_model, learning_handler_new_model.model, new_acc, prev_acc,
-                                     self.loaded_model.mission_type)
+        reward = self.compute_reward1(self.current_model, learning_handler_new_model.model, new_acc, prev_acc,
+                                      self.loaded_model.mission_type)
 
         self.layer_index += 1
         learning_handler_new_model.unfreeze_all_layers()
@@ -99,11 +116,11 @@ class NetworkEnv:
         done = self.layer_index == len(self.feature_extractor.model_with_rows.all_rows)
         return fm, reward, done
 
-    def compute_reward(self, curr_model, new_model, new_acc, prev_acc, mission_type):
+    def compute_reward1(self, curr_model, new_model, new_acc, prev_acc, mission_type):
         current_model_parameter_num = self.calc_num_parameters(curr_model)
         new_model_parameter_num = self.calc_num_parameters(new_model)
         C = 1 - (new_model_parameter_num / current_model_parameter_num)
-        reward = C * (2 - C)
+        reward = 0.4 * (C * (2 - C))
 
         if (mission_type is MissionTypes.Classification):
             reward *= new_acc / prev_acc
