@@ -46,10 +46,11 @@ class A2C_Agent_Reinforce():
         #                                       priority_beta_start, priority_beta_frames)
 
         self.action_to_compression = {
-            0: 0.9,
-            1: 0.8,
-            2: 0.7,
-            3: 0.6
+            0: 1,
+            1: 0.9,
+            2: 0.8,
+            3: 0.7,
+            4: 0.6
         }
 
     def compute_returns(self, next_value, rewards, masks, gamma=0.99):

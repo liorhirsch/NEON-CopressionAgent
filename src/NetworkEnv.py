@@ -84,20 +84,19 @@ class NetworkEnv:
         :return: next_state, reward
         """
         # Create new layer with smaller size & Create new model with the new layer
-        new_model = self.create_new_model(action)
-        new_model_with_rows = ModelWithRows(new_model)
+        if action == 1:
+            new_model_with_rows = ModelWithRows(self.current_model)
+            learning_handler_new_model = self.create_learning_handler(self.current_model)
+        else:
+            new_model = self.create_new_model(action)
+            new_model_with_rows = ModelWithRows(new_model)
+            learning_handler_new_model = self.create_learning_handler(new_model)
+            parameters_to_freeze_ids = self.build_parameters_to_freeze(new_model_with_rows)
+            learning_handler_new_model.freeze_layers(parameters_to_freeze_ids)
+            learning_handler_new_model.train_model()
 
         learning_handler_prev_model = self.create_learning_handler(self.current_model)
-
-        learning_handler_new_model = self.create_learning_handler(new_model)
-
         prev_acc = learning_handler_prev_model.evaluate_model()
-
-        parameters_to_freeze_ids = self.build_parameters_to_freeze(new_model_with_rows)
-
-        # train network
-        learning_handler_new_model.freeze_layers(parameters_to_freeze_ids)
-        learning_handler_new_model.train_model()
         new_acc = learning_handler_new_model.evaluate_model()
 
         # compute reward
