@@ -37,8 +37,8 @@ class ClassificationHandler(BasicHandler):
 
         dataSet = Dataset(self.cross_validation_obj.x_train, self.cross_validation_obj.y_train)
         trainLoader = torch.utils.data.DataLoader(dataSet, batch_size=32, shuffle=True)
-        net = self.model.float()
         device = StaticConf.getInstance().conf_values.device
+        net = self.model.float().to(device)
 
         for epoch in range(StaticConf.getInstance().conf_values.num_epoch):
             running_loss = 0.0
