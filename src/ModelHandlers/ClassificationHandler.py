@@ -48,7 +48,7 @@ class ClassificationHandler(BasicHandler):
 
                 if len(curr_x) > 1:
                     self.optimizer.zero_grad()
-                    outputs = net(curr_x.to(device).float())
+                    outputs = net(curr_x.float().to(device))
                     curr_y = torch.max(curr_y, 1)[1]
                     loss = self.loss_func(outputs, curr_y.to(device))
                     loss.backward()
