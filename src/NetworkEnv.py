@@ -72,7 +72,7 @@ class NetworkEnv:
         device = StaticConf.getInstance().conf_values.device
         self.loaded_model, self.X_data, self.Y_data = load_model_and_data(selected_net_path, x_path, y_path, device)
         self.current_model = self.loaded_model.model
-        self.feature_extractor = FeatureExtractor(self.loaded_model.model, self.X_data._values)
+        self.feature_extractor = FeatureExtractor(self.loaded_model.model, self.X_data._values, device)
         fm = self.feature_extractor.extract_features(self.layer_index - 1)
         self.create_train_test_splits()
         return fm
@@ -108,7 +108,8 @@ class NetworkEnv:
         self.current_model = learning_handler_new_model.model
 
         # get FM for the new model and the next layer.
-        self.feature_extractor = FeatureExtractor(self.current_model, self.X_data._values)
+        device = StaticConf.getInstance().conf_values.device
+        self.feature_extractor = FeatureExtractor(self.current_model, self.X_data._values, device)
         fm = self.feature_extractor.extract_features(self.layer_index - 1)
 
         # Compute done
