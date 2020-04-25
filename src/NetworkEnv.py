@@ -91,8 +91,8 @@ class NetworkEnv:
             new_model = self.create_new_model(action)
             new_model_with_rows = ModelWithRows(new_model)
             learning_handler_new_model = self.create_learning_handler(new_model)
-            parameters_to_freeze_ids = self.build_parameters_to_freeze(new_model_with_rows)
-            learning_handler_new_model.freeze_layers(parameters_to_freeze_ids)
+            # parameters_to_freeze_ids = self.build_parameters_to_freeze(new_model_with_rows)
+            # learning_handler_new_model.freeze_layers(parameters_to_freeze_ids)
             learning_handler_new_model.train_model()
 
         learning_handler_prev_model = self.create_learning_handler(self.current_model)
@@ -100,7 +100,7 @@ class NetworkEnv:
         new_acc = learning_handler_new_model.evaluate_model()
 
         # compute reward
-        reward = self.compute_reward1(self.current_model, learning_handler_new_model.model, new_acc, prev_acc,
+        reward = self.compute_reward2(self.current_model, learning_handler_new_model.model, new_acc, prev_acc,
                                       self.loaded_model.mission_type)
 
         self.layer_index += 1
@@ -116,6 +116,9 @@ class NetworkEnv:
         return fm, reward, done
 
     def compute_reward1(self, curr_model, new_model, new_acc, prev_acc, mission_type):
+        """
+        compute reward with by multiplying the parameter part with 0.4
+        """
         current_model_parameter_num = self.calc_num_parameters(curr_model)
         new_model_parameter_num = self.calc_num_parameters(new_model)
         C = 1 - (new_model_parameter_num / current_model_parameter_num)
@@ -125,6 +128,21 @@ class NetworkEnv:
             reward *= new_acc / prev_acc
         else:
             reward *= prev_acc / new_acc
+        return reward
+
+    def compute_reward2(self, curr_model, new_model, new_acc, prev_acc, mission_type):
+        current_model_parameter_num = self.calc_num_parameters(curr_model)
+        new_model_parameter_num = self.calc_num_parameters(new_model)
+        C = 1 - (new_model_parameter_num / current_model_parameter_num)
+        reward = 10 * (C * (2 - C))
+
+        if (mission_type is MissionTypes.Classification):
+            reward *= 30 * new_acc / prev_acc
+
+            if prev_acc - new_acc > 0.2:
+                reward = -10
+        else:
+            reward *= 30 * prev_acc / new_acc
         return reward
 
     def calc_num_parameters(self, model):

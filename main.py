@@ -35,9 +35,9 @@ def load_models_path(main_path, mode='train'):
     return model_paths
 
 
-def init_conf_values():
+def init_conf_values(num_actions=5, num_epoch=100):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    cv = ConfigurationValues(device)
+    cv = ConfigurationValues(device, num_actions=num_actions, num_epoch=num_epoch)
     StaticConf(cv)
 
 
