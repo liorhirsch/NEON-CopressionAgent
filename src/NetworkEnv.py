@@ -84,7 +84,8 @@ class NetworkEnv:
         :return: next_state, reward
         """
         # Create new layer with smaller size & Create new model with the new layer
-        if action == 1:
+        # TODO - change back to 1 after tests
+        if action == 10:
             new_model_with_rows = ModelWithRows(self.current_model)
             learning_handler_new_model = self.create_learning_handler(self.current_model)
         else:
