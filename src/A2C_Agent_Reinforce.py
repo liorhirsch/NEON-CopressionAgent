@@ -64,7 +64,7 @@ class A2C_Agent_Reinforce():
         frame_idx = 0
 
         all_rewards_episodes = []
-        min_reward_in_all_episodes = np.inf
+        max_reward_in_all_episodes = -np.inf
         reward_not_improving = False
 
         while self.episode_idx < self.num_episodes or (not reward_not_improving):
@@ -196,10 +196,10 @@ class A2C_Agent_Reinforce():
             all_rewards_episodes.append(returns[-1])
             curr_reward = all_rewards_episodes[-1]
 
-            if min_reward_in_all_episodes > curr_reward:
-                min_reward_in_all_episodes = curr_reward
+            if max_reward_in_all_episodes < curr_reward:
+                max_reward_in_all_episodes = curr_reward
 
-            if len(all_rewards_episodes) > 20 and min_reward_in_all_episodes < min(all_rewards_episodes[-20:]):
+            if len(all_rewards_episodes) > 20 and max_reward_in_all_episodes < min(all_rewards_episodes[-20:]):
                 reward_not_improving = True
 
 def v(a):
