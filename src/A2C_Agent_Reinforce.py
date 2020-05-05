@@ -67,7 +67,7 @@ class A2C_Agent_Reinforce():
         max_reward_in_all_episodes = -np.inf
         reward_not_improving = False
 
-        while self.episode_idx < self.num_episodes or (not reward_not_improving):
+        while self.episode_idx < 21 or (not reward_not_improving):
             print("Episode {}/{}".format(self.episode_idx, self.num_episodes))
             state = self.env.reset()
             log_probs = []
@@ -196,10 +196,12 @@ class A2C_Agent_Reinforce():
             all_rewards_episodes.append(returns[-1])
             curr_reward = all_rewards_episodes[-1]
 
-            if max_reward_in_all_episodes < curr_reward:
-                max_reward_in_all_episodes = curr_reward
+            if max_reward_in_all_episodes < v(curr_reward):
+                max_reward_in_all_episodes = v(curr_reward)
 
-            if len(all_rewards_episodes) > 20 and max_reward_in_all_episodes < min(all_rewards_episodes[-20:]):
+
+
+            if len(all_rewards_episodes) > 20 and max_reward_in_all_episodes > max(all_rewards_episodes[-20:]):
                 reward_not_improving = True
 
 def v(a):
