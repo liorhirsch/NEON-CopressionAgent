@@ -6,13 +6,13 @@ class StaticConf:
     conf_values: ConfigurationValues
 
     @staticmethod
-    def getInstance():
+    def getInstance() -> 'StaticConf':
         """ Static access method. """
         if StaticConf.__instance == None:
             StaticConf()
         return StaticConf.__instance
 
-    def __init__(self, conf_values):
+    def __init__(self, conf_values: ConfigurationValues):
         """ Virtually private constructor. """
         if StaticConf.__instance != None:
             raise Exception("This class is a singleton!")

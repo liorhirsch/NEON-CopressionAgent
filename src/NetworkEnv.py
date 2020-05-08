@@ -1,3 +1,4 @@
+import copy
 from typing import Dict, Type
 
 import numpy as np
@@ -92,9 +93,17 @@ class NetworkEnv:
             new_model = self.create_new_model(action)
             new_model_with_rows = ModelWithRows(new_model)
             learning_handler_new_model = self.create_learning_handler(new_model)
-            # parameters_to_freeze_ids = self.build_parameters_to_freeze(new_model_with_rows)
-            # learning_handler_new_model.freeze_layers(parameters_to_freeze_ids)
+
+            if StaticConf.getInstance().conf_values.is_learn_new_layers_only:
+                parameters_to_freeze_ids = self.build_parameters_to_freeze(new_model_with_rows)
+                learning_handler_new_model.freeze_layers(parameters_to_freeze_ids)
+            else:
+                learning_handler_new_model.unfreeze_all_layers()
+
             learning_handler_new_model.train_model()
+
+        self.current_model.eval()
+        learning_handler_new_model.model.eval()
 
         learning_handler_prev_model = self.create_learning_handler(self.current_model)
         prev_acc = learning_handler_prev_model.evaluate_model()
@@ -193,7 +202,8 @@ class NetworkEnv:
             elif self.is_to_change_bn_layer(l, last_linear_layer):
                 new_model_layers.append(nn.BatchNorm1d(last_linear_layer.out_features))
             else:
-                new_model_layers.append(l)
+                # new_model_layers.append(l)
+                new_model_layers.append(copy.deepcopy(l))
 
             if type(l) is nn.Linear:
                 last_linear_layer = new_model_layers[-1]

@@ -1,5 +1,6 @@
 import torch
 from sklearn.metrics import accuracy_score
+from torch.optim.adam import Adam
 
 from src.Configuration.StaticConf import StaticConf
 from src.ModelHandlers.BasicHandler import BasicHandler
@@ -38,7 +39,11 @@ class ClassificationHandler(BasicHandler):
         dataSet = Dataset(self.cross_validation_obj.x_train, self.cross_validation_obj.y_train)
         trainLoader = torch.utils.data.DataLoader(dataSet, batch_size=32, shuffle=True)
         device = StaticConf.getInstance().conf_values.device
-        net = self.model.float().to(device)
+
+        self.model.float().to(device)
+        self.model.train()
+
+        self.optimizer.param_groups[0]['params'] = list(self.model.parameters())
 
         for epoch in range(StaticConf.getInstance().conf_values.num_epoch):
             running_loss = 0.0
@@ -48,7 +53,7 @@ class ClassificationHandler(BasicHandler):
 
                 if len(curr_x) > 1:
                     self.optimizer.zero_grad()
-                    outputs = net(curr_x.float().to(device))
+                    outputs = self.model(curr_x.float().to(device))
                     curr_y = torch.max(curr_y, 1)[1]
                     loss = self.loss_func(outputs, curr_y.to(device))
                     loss.backward()
