@@ -6,6 +6,7 @@ import numpy as np
 from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX
 from NetworkFeatureExtration.src.main import load_checkpoint
 from src.A2C_Agent_Reinforce import A2C_Agent_Reinforce
+from src.A2C_Combined_Agent_Reinforce import A2C_Combined_Agent_Reinforce
 from src.Configuration.ConfigurationValues import ConfigurationValues
 from src.Configuration.StaticConf import StaticConf
 from src.Model.ActorCritic import ActorCritic
@@ -45,8 +46,8 @@ def init_conf_values(num_actions=5, num_epoch=100, is_learn_new_layers_only = Fa
 torch.manual_seed(0)
 np.random.seed(0)
 
-# init_conf_values()
+# init_conf_values(is_learn_new_layers_only=True)
 # models_path = load_models_path('./OneDatasetLearning/Classification/diabetes/', 'all')
-# agent = A2C_Agent_Reinforce(models_path)
+# agent = A2C_Combined_Agent_Reinforce(models_path)
 # agent.train()
 # torch.save(agent.actor_critic_model.state_dict(), "ac_model.pt")
