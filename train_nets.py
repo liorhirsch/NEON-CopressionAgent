@@ -12,6 +12,9 @@ from src.Model.ActorCritic import ActorCritic
 from src.NetworkEnv import NetworkEnv
 import pandas as pd
 from main import init_conf_values, load_models_path
+import cProfile, pstats
+from io import StringIO
+
 
 torch.manual_seed(0)
 np.random.seed(0)
@@ -27,6 +30,10 @@ from datetime import datetime
 
 name = 'train_all_model_epochs_{}'.format(num_epoch)
 data = []
+
+
+pr = cProfile.Profile()
+pr.enable()
 
 for model_path in models_path[0][1]:
     start = datetime.now()
@@ -49,6 +56,17 @@ for model_path in models_path[0][1]:
 
     curr_model_data.insert(1, str(datetime.now() - start))
     data.append(curr_model_data)
+    break
+
+pr.disable()
+s = StringIO()
+sortby = 'cumulative'
+ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+ps.print_stats()
+print(s.getvalue())
+
+
+print(curr_model_data)
 
 
 
