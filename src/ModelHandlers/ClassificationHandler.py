@@ -1,6 +1,8 @@
+import copy
+
 import torch
 from sklearn.metrics import accuracy_score
-from torch.optim.adam import Adam
+import numpy as np
 
 from src.Configuration.StaticConf import StaticConf
 from src.ModelHandlers.BasicHandler import BasicHandler
@@ -35,6 +37,7 @@ class ClassificationHandler(BasicHandler):
         return accuracy_score(validation_output, self.cross_validation_obj.y_test)
 
     def train_model(self):
+        # TODO - move all changes made here to RegressionHandler
 
         dataSet = Dataset(self.cross_validation_obj.x_train, self.cross_validation_obj.y_train)
         trainLoader = torch.utils.data.DataLoader(dataSet, batch_size=32, shuffle=True)
@@ -42,6 +45,8 @@ class ClassificationHandler(BasicHandler):
 
         self.model.float().to(device)
         self.model.train()
+        best_loss = np.inf
+        best_state_dict = None
 
         self.optimizer.param_groups[0]['params'] = list(self.model.parameters())
 
@@ -56,5 +61,12 @@ class ClassificationHandler(BasicHandler):
                     outputs = self.model(curr_x.float().to(device))
                     curr_y = torch.max(curr_y, 1)[1]
                     loss = self.loss_func(outputs, curr_y.to(device))
+
+                    if loss < best_loss:
+                        best_loss = loss
+                        best_state_dict = copy.deepcopy(self.model.state_dict())
+
                     loss.backward()
                     self.optimizer.step()
+
+        self.model.load_state_dict(best_state_dict)
