@@ -42,7 +42,6 @@ class NetworkEnv:
             MissionTypes.Classification: ClassificationHandler
         }
 
-
     def create_train_test_splits(self):
         self.cross_validation_obj = CrossValidationObject(
             *train_test_split(self.X_data.values, self.Y_data.values, test_size=0.2))
@@ -76,6 +75,10 @@ class NetworkEnv:
         self.feature_extractor = FeatureExtractor(self.loaded_model.model, self.X_data._values, device)
         fm = self.feature_extractor.extract_features(self.layer_index - 1)
         self.create_train_test_splits()
+
+        learning_handler_original_model = self.create_learning_handler(self.current_model)
+        self.original_acc = learning_handler_original_model.evaluate_model()
+
         return fm
 
     def step(self, action):
@@ -105,13 +108,13 @@ class NetworkEnv:
         self.current_model.eval()
         learning_handler_new_model.model.eval()
 
-        learning_handler_prev_model = self.create_learning_handler(self.current_model)
-        prev_acc = learning_handler_prev_model.evaluate_model()
+        # learning_handler_prev_model = self.create_learning_handler(self.current_model)
+        # prev_acc = learning_handler_prev_model.evaluate_model()
         new_acc = learning_handler_new_model.evaluate_model()
 
         # compute reward
-        reward = self.compute_reward2(self.current_model, learning_handler_new_model.model, new_acc, prev_acc,
-                                      self.loaded_model.mission_type)
+        reward = self.compute_reward3(self.current_model, learning_handler_new_model.model, new_acc, self.original_acc,
+                                      self.loaded_model.mission_type, action)
 
         self.layer_index += 1
         learning_handler_new_model.unfreeze_all_layers()
@@ -154,6 +157,21 @@ class NetworkEnv:
                 reward = -10
         else:
             reward *= 30 * prev_acc / new_acc
+        return reward
+
+    def compute_reward3(self, curr_model, new_model, new_acc, prev_acc, mission_type, action):
+        total_allowed_accuracy_reduction = StaticConf.getInstance().conf_values.total_allowed_accuracy_reduction
+        layer_reduction_size = action * 100
+
+        delta_acc = (new_acc - prev_acc) * 100
+
+        if delta_acc < -total_allowed_accuracy_reduction:
+            reward = -layer_reduction_size ** 3
+        elif delta_acc > total_allowed_accuracy_reduction:
+            reward = layer_reduction_size ** 3
+        else:
+            reward = action
+
         return reward
 
     def calc_num_parameters(self, model):
