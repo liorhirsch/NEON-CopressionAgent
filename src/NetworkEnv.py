@@ -109,7 +109,7 @@ class NetworkEnv:
         learning_handler_new_model.model.eval()
 
         # learning_handler_prev_model = self.create_learning_handler(self.current_model)
-        # prev_acc = learning_handler_prev_model.evaluate_model()
+        # prev_acc = learning_handler_prev_model.evaluate_model()pn
         new_acc = learning_handler_new_model.evaluate_model()
 
         # compute reward
