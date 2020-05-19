@@ -114,7 +114,7 @@ class A2C_Combined_Agent_Reinforce():
             if max_reward_in_all_episodes < v(curr_reward):
                 max_reward_in_all_episodes = v(curr_reward)
 
-            if len(all_rewards_episodes) > min_epochs and max_reward_in_all_episodes > max(all_rewards_episodes[-20:]):
+            if len(all_rewards_episodes) > min_epochs and max_reward_in_all_episodes >= max(all_rewards_episodes[-20:]):
                 reward_not_improving = True
 
 def v(a):

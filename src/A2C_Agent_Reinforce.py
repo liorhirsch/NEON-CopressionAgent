@@ -201,7 +201,7 @@ class A2C_Agent_Reinforce():
 
 
 
-            if len(all_rewards_episodes) > 20 and max_reward_in_all_episodes > max(all_rewards_episodes[-20:]):
+            if len(all_rewards_episodes) > 20 and max_reward_in_all_episodes >= max(all_rewards_episodes[-20:]):
                 reward_not_improving = True
 
 def v(a):
