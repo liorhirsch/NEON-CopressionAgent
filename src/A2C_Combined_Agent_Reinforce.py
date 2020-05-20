@@ -28,14 +28,6 @@ class A2C_Combined_Agent_Reinforce():
 
         self.env = NetworkEnv(models_path)
 
-        self.action_to_compression = {
-            0: 1,
-            1: 0.9,
-            2: 0.8,
-            3: 0.7,
-            4: 0.6
-        }
-
     def compute_returns(self, next_value, rewards, masks, gamma=0.99):
         R = next_value
         returns = []
@@ -52,6 +44,7 @@ class A2C_Combined_Agent_Reinforce():
         max_reward_in_all_episodes = -np.inf
         reward_not_improving = False
         min_epochs = 100
+        action_to_compression = StaticConf.getInstance().conf_values.action_to_compression_rate
 
         while self.episode_idx < min_epochs or (not reward_not_improving):
             print("Episode {}/{}".format(self.episode_idx, self.num_episodes))
@@ -66,7 +59,7 @@ class A2C_Combined_Agent_Reinforce():
                 dist, value = self.actor_critic_model(state)
 
                 action = dist.sample()
-                compression_rate = self.action_to_compression[action.cpu().numpy()[0]]
+                compression_rate = action_to_compression[action.cpu().numpy()[0]]
                 next_state, reward, done = self.env.step(compression_rate)
 
                 log_prob = dist.log_prob(action)

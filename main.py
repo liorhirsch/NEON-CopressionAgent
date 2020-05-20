@@ -36,9 +36,10 @@ def load_models_path(main_path, mode='train'):
     return model_paths
 
 
-def init_conf_values(num_actions=5, num_epoch=100, is_learn_new_layers_only = False, total_allowed_accuracy_reduction = 1):
+def init_conf_values(action_to_compression_rate, num_epoch=100, is_learn_new_layers_only = False, total_allowed_accuracy_reduction = 1):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    cv = ConfigurationValues(device, num_actions=num_actions, num_epoch=num_epoch,
+    num_actions = len(action_to_compression_rate)
+    cv = ConfigurationValues(device, action_to_compression_rate, num_actions=num_actions, num_epoch=num_epoch,
                              is_learn_new_layers_only = is_learn_new_layers_only,
                              total_allowed_accuracy_reduction = total_allowed_accuracy_reduction)
     StaticConf(cv)
