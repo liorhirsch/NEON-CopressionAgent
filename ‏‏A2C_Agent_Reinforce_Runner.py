@@ -173,11 +173,11 @@ def main(dataset_name, is_learn_new_layers_only, test_name,
 
 def extract_args_from_cmd():
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--test_name', type=str)
+    # parser.add_argument('--test_name', type=str)
     parser.add_argument('--dataset_name', type=str)
     parser.add_argument('--learn_new_layers_only', type=bool, const=True, default=False, nargs='?')
     parser.add_argument('--split', type=bool, const=True, default=False, nargs='?')
-    parser.add_argument('--allowed_reduction_acc', type=int, const=True, default=False, nargs='?')
+    parser.add_argument('--allowed_reduction_acc', type=int, nargs='?')
 
 
     args = parser.parse_args()
@@ -186,6 +186,7 @@ def extract_args_from_cmd():
 
 if __name__ == "__main__":
     args = extract_args_from_cmd()
-    main(dataset_name=args.dataset_name, is_learn_new_layers_only=args.learn_new_layers_only,test_name=args.test_name,
+    test_name = f'Agent_Combined_{args.dataset_name}_learn_new_layers_only_{args.learn_new_layers_only}_acc_reduction_{args.allowed_reduction_acc}'
+    main(dataset_name=args.dataset_name, is_learn_new_layers_only=args.learn_new_layers_only,test_name=test_name,
          is_to_split_cv=args.split,
          total_allowed_accuracy_reduction=args.allowed_reduction_acc)
