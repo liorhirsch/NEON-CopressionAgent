@@ -11,7 +11,7 @@ from src.Configuration.StaticConf import StaticConf
 from src.Model.ActorCritic import ActorCritic
 from src.NetworkEnv import NetworkEnv
 import pandas as pd
-from main import init_conf_values, load_models_path
+from A2C_Combined_Agent_Reinforce_Runner import init_conf_values, load_models_path
 import cProfile, pstats
 from io import StringIO
 

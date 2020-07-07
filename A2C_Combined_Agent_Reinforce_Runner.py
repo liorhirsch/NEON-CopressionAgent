@@ -1,6 +1,7 @@
 # from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX - must be import!!!!
 
 import os
+from datetime import datetime
 import sys
 import argparse
 import numpy as np
@@ -153,22 +154,31 @@ def main(dataset_name, is_learn_new_layers_only, test_name,
     models_path = load_models_path(base_path, 'train')
 
     agent = A2C_Combined_Agent_Reinforce(models_path)
+    agent.train()
+
 
     mode = 'test'
     results = evaluate_model(mode, base_path, agent)
-    results.to_csv("./models/Reinforce_One_Dataset/results_{}{}.csv".format(test_name, mode))
+    results.to_csv(f"./models/Reinforce_One_Dataset/results_{test_name}_{mode}.csv")
 
     mode = 'train'
     results = evaluate_model(mode, base_path, agent)
-    results.to_csv("./models/Reinforce_One_Dataset/results_{}_{}.csv".format(test_name, mode))
+    results.to_csv(f"./models/Reinforce_One_Dataset/results_{test_name}_{mode}.csv")
+
+
+
+
+
+
 
 def extract_args_from_cmd():
     parser = argparse.ArgumentParser(description='')
+    parser.add_argument('--test_name', type=str)
     parser.add_argument('--dataset_name', type=str)
     parser.add_argument('--learn_new_layers_only', type=bool, const=True, default=False, nargs='?')
-    parser.add_argument('--test_name', type=str)
     parser.add_argument('--split', type=bool, const=True, default=False, nargs='?')
     parser.add_argument('--allowed_reduction_acc', type=int, const=True, default=False, nargs='?')
+
 
     args = parser.parse_args()
     return args
@@ -176,6 +186,6 @@ def extract_args_from_cmd():
 
 if __name__ == "__main__":
     args = extract_args_from_cmd()
-    main(dataset_name=args.dataset_name, is_learn_new_layers_only=args.learn_new_layers_only, test_name=args.test_name,
+    main(dataset_name=args.dataset_name, is_learn_new_layers_only=args.learn_new_layers_only,test_name=args.test_name,
          is_to_split_cv=args.split,
          total_allowed_accuracy_reduction=args.allowed_reduction_acc)

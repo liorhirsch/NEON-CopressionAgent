@@ -1,8 +1,8 @@
 import torch
 
-import main
+import A2C_Combined_Agent_Reinforce_Runner
 from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX
-from main import init_conf_values, load_models_path
+from A2C_Combined_Agent_Reinforce_Runner import init_conf_values, load_models_path
 from src.Configuration.StaticConf import StaticConf
 from src.Model.ActorCritic import ActorCritic
 from src.NetworkEnv import NetworkEnv
