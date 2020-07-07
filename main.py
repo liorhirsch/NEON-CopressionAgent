@@ -16,7 +16,6 @@ from src.Configuration.ConfigurationValues import ConfigurationValues
 from src.Configuration.StaticConf import StaticConf
 from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX
 from src.NetworkEnv import NetworkEnv
-from trains import Task, Logger
 
 
 def load_models_path(main_path, mode='train'):
@@ -135,7 +134,7 @@ def evaluate_model(mode, base_path, agent):
     return results
 
 
-def main(dataset_name, is_learn_new_layers_only, test_name, task: Task, logger: Logger,
+def main(dataset_name, is_learn_new_layers_only, test_name,
          total_allowed_accuracy_reduction, is_to_split_cv=False):
     actions = {
         0: 1,
@@ -159,13 +158,9 @@ def main(dataset_name, is_learn_new_layers_only, test_name, task: Task, logger: 
     results = evaluate_model(mode, base_path, agent)
     results.to_csv("./models/Reinforce_One_Dataset/results_{}{}.csv".format(test_name, mode))
 
-    logger.report_table(title=mode, series='', iteration=0, table_plot=results)
-
     mode = 'train'
     results = evaluate_model(mode, base_path, agent)
     results.to_csv("./models/Reinforce_One_Dataset/results_{}_{}.csv".format(test_name, mode))
-    logger.report_table(title=mode, series='', iteration=0, table_plot=results)
-
 
 def extract_args_from_cmd():
     parser = argparse.ArgumentParser(description='')
@@ -173,17 +168,14 @@ def extract_args_from_cmd():
     parser.add_argument('--learn_new_layers_only', type=bool, const=True, default=False, nargs='?')
     parser.add_argument('--test_name', type=str)
     parser.add_argument('--split', type=bool, const=True, default=False, nargs='?')
-    parser.add_argument('--allowed_reduction_acc', type=bool, const=True, default=False, nargs='?')
+    parser.add_argument('--allowed_reduction_acc', type=int, const=True, default=False, nargs='?')
 
     args = parser.parse_args()
     return args
 
 
 if __name__ == "__main__":
-    task = Task.init(project_name='Compression Agent', task_name='A2C_Combined_Agent_Reinforce')
-    logger = task.get_logger()
-
     args = extract_args_from_cmd()
     main(dataset_name=args.dataset_name, is_learn_new_layers_only=args.learn_new_layers_only, test_name=args.test_name,
-         task=task, logger=logger, is_to_split_cv=args.split,
+         is_to_split_cv=args.split,
          total_allowed_accuracy_reduction=args.allowed_reduction_acc)
