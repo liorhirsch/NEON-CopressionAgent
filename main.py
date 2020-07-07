@@ -1,4 +1,4 @@
-# from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX - should be import!!!!
+# from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX - must be import!!!!
 
 import os
 import sys
@@ -16,6 +16,7 @@ from src.Configuration.ConfigurationValues import ConfigurationValues
 from src.Configuration.StaticConf import StaticConf
 from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX
 from src.NetworkEnv import NetworkEnv
+from trains import Task, Logger
 
 
 def load_models_path(main_path, mode='train'):
@@ -40,17 +41,20 @@ def load_models_path(main_path, mode='train'):
     return model_paths
 
 
-def init_conf_values(action_to_compression_rate, num_epoch=100, is_learn_new_layers_only = False, total_allowed_accuracy_reduction = 1):
+def init_conf_values(action_to_compression_rate, num_epoch=100, is_learn_new_layers_only=False,
+                     total_allowed_accuracy_reduction=1):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     num_actions = len(action_to_compression_rate)
-    cv = ConfigurationValues(device, action_to_compression_rate=action_to_compression_rate, num_actions=num_actions, num_epoch=num_epoch,
-                             is_learn_new_layers_only = is_learn_new_layers_only,
-                             total_allowed_accuracy_reduction = total_allowed_accuracy_reduction)
+    cv = ConfigurationValues(device, action_to_compression_rate=action_to_compression_rate, num_actions=num_actions,
+                             num_epoch=num_epoch,
+                             is_learn_new_layers_only=is_learn_new_layers_only,
+                             total_allowed_accuracy_reduction=total_allowed_accuracy_reduction)
     StaticConf(cv)
 
 
 torch.manual_seed(0)
 np.random.seed(0)
+
 
 def split_dataset_to_train_test(path):
     models_path = load_models_path(path, 'all')
@@ -58,22 +62,25 @@ def split_dataset_to_train_test(path):
     all_models = list(map(os.path.basename, all_models))
     train_models, test_models = train_test_split(all_models, test_size=0.2)
 
-    df_train = DataFrame(data = train_models)
+    df_train = DataFrame(data=train_models)
     df_train.to_csv(path + "train_models.csv")
 
-    df_test = DataFrame(data = test_models)
+    df_test = DataFrame(data=test_models)
     df_test.to_csv(path + "test_models.csv")
+
 
 def get_linear_layer(row):
     for l in row:
         if type(l) is nn.Linear:
             return l
 
+
 def get_model_layers(model):
     new_model_with_rows = ModelWithRows(model)
     linear_layers = [(get_linear_layer(x).in_features, get_linear_layer(x).out_features) for x in
                      new_model_with_rows.all_rows]
     return str(linear_layers)
+
 
 def evaluate_model(mode, base_path, agent):
     models_path = load_models_path(base_path, mode)
@@ -86,7 +93,6 @@ def evaluate_model(mode, base_path, agent):
         4: 0.6
     }
 
-
     results = DataFrame(columns=['model', 'new_acc', 'origin_acc', 'new_param',
                                  'origin_param', 'new_model_arch', 'origin_model_arch'])
 
@@ -97,8 +103,8 @@ def evaluate_model(mode, base_path, agent):
 
         while not done:
             dist, value = agent.actor_critic_model(state)
-#             value = agent.critic_model(state)
-#             dist = agent.actor_model(state)
+            #             value = agent.critic_model(state)
+            #             dist = agent.actor_model(state)
 
             action = dist.sample()
             compression_rate = action_to_compression[action.cpu().numpy()[0]]
@@ -118,17 +124,19 @@ def evaluate_model(mode, base_path, agent):
 
         new_model_with_rows = ModelWithRows(env.current_model)
 
-
-        results = results.append({'model':model_name,
+        results = results.append({'model': model_name,
                                   'new_acc': new_acc,
                                   'origin_acc': origin_acc,
                                   'new_param': new_params,
-                                  'origin_param':origin_params,
+                                  'origin_param': origin_params,
                                   'new_model_arch': get_model_layers(env.current_model),
                                   'origin_model_arch': get_model_layers(env.loaded_model.model)}, ignore_index=True)
+
     return results
 
-def main(dataset_name, is_learn_new_layers_only, test_name, is_to_split_cv = False):
+
+def main(dataset_name, is_learn_new_layers_only, test_name, task: Task, logger: Logger,
+         total_allowed_accuracy_reduction, is_to_split_cv=False):
     actions = {
         0: 1,
         1: 0.9,
@@ -141,7 +149,8 @@ def main(dataset_name, is_learn_new_layers_only, test_name, is_to_split_cv = Fal
     if is_to_split_cv:
         split_dataset_to_train_test(base_path)
 
-    init_conf_values(actions, is_learn_new_layers_only=True, num_epoch=100, total_allowed_accuracy_reduction=0)
+    init_conf_values(actions, is_learn_new_layers_only=is_learn_new_layers_only, num_epoch=100,
+                     total_allowed_accuracy_reduction=total_allowed_accuracy_reduction)
     models_path = load_models_path(base_path, 'train')
 
     agent = A2C_Combined_Agent_Reinforce(models_path)
@@ -150,9 +159,13 @@ def main(dataset_name, is_learn_new_layers_only, test_name, is_to_split_cv = Fal
     results = evaluate_model(mode, base_path, agent)
     results.to_csv("./models/Reinforce_One_Dataset/results_{}{}.csv".format(test_name, mode))
 
+    logger.report_table(title=mode, series='', iteration=0, table_plot=results)
+
     mode = 'train'
     results = evaluate_model(mode, base_path, agent)
     results.to_csv("./models/Reinforce_One_Dataset/results_{}_{}.csv".format(test_name, mode))
+    logger.report_table(title=mode, series='', iteration=0, table_plot=results)
+
 
 def extract_args_from_cmd():
     parser = argparse.ArgumentParser(description='')
@@ -160,11 +173,17 @@ def extract_args_from_cmd():
     parser.add_argument('--learn_new_layers_only', type=bool, const=True, default=False, nargs='?')
     parser.add_argument('--test_name', type=str)
     parser.add_argument('--split', type=bool, const=True, default=False, nargs='?')
+    parser.add_argument('--allowed_reduction_acc', type=bool, const=True, default=False, nargs='?')
 
     args = parser.parse_args()
     return args
 
 
 if __name__ == "__main__":
+    task = Task.init(project_name='Compression Agent', task_name='A2C_Combined_Agent_Reinforce')
+    logger = task.get_logger()
+
     args = extract_args_from_cmd()
-    main(args.dataset_name, args.learn_new_layers_only, args.test_name, args.split)
+    main(dataset_name=args.dataset_name, is_learn_new_layers_only=args.learn_new_layers_only, test_name=args.test_name,
+         task=task, logger=logger, is_to_split_cv=args.split,
+         total_allowed_accuracy_reduction=args.allowed_reduction_acc)
