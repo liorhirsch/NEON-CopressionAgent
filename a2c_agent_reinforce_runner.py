@@ -102,9 +102,9 @@ def evaluate_model(mode, base_path, agent):
         done = False
 
         while not done:
-            dist, value = agent.actor_critic_model(state)
-            #             value = agent.critic_model(state)
-            #             dist = agent.actor_model(state)
+            # dist, value = agent.actor_critic_model(state)
+            value = agent.critic_model(state)
+            dist = agent.actor_model(state)
 
             action = dist.sample()
             compression_rate = action_to_compression[action.cpu().numpy()[0]]
