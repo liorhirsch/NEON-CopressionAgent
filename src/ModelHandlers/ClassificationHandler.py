@@ -47,12 +47,14 @@ class ClassificationHandler(BasicHandler):
         self.model.train()
         best_loss = np.inf
         best_state_dict = None
+        epochs_not_improved = 0
+        MAX_EPOCHS_PATIENCE = 5
 
         self.optimizer.param_groups[0]['params'] = list(self.model.parameters())
 
         for epoch in range(StaticConf.getInstance().conf_values.num_epoch):
             running_loss = 0.0
-
+            epochs_not_improved += 1
             for i, batch in enumerate(trainLoader, 0):
                 curr_x, curr_y = batch
 
@@ -63,10 +65,14 @@ class ClassificationHandler(BasicHandler):
                     loss = self.loss_func(outputs, curr_y.to(device))
 
                     if loss < best_loss:
+                        epochs_not_improved = 0
                         best_loss = loss
                         best_state_dict = copy.deepcopy(self.model.state_dict())
 
                     loss.backward()
                     self.optimizer.step()
+
+            if epochs_not_improved == MAX_EPOCHS_PATIENCE:
+                break
 
         self.model.load_state_dict(best_state_dict)
