@@ -42,13 +42,14 @@ def load_models_path(main_path, mode='train'):
 
 
 def init_conf_values(action_to_compression_rate, num_epoch=100, is_learn_new_layers_only=False,
-                     total_allowed_accuracy_reduction=1):
+                     total_allowed_accuracy_reduction=1, can_do_more_then_one_loop=False):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     num_actions = len(action_to_compression_rate)
     cv = ConfigurationValues(device, action_to_compression_rate=action_to_compression_rate, num_actions=num_actions,
                              num_epoch=num_epoch,
                              is_learn_new_layers_only=is_learn_new_layers_only,
-                             total_allowed_accuracy_reduction=total_allowed_accuracy_reduction)
+                             total_allowed_accuracy_reduction=total_allowed_accuracy_reduction,
+                             can_do_more_then_one_loop=can_do_more_then_one_loop)
     StaticConf(cv)
 
 
@@ -136,7 +137,7 @@ def evaluate_model(mode, base_path, agent):
 
 
 def main(dataset_name, is_learn_new_layers_only, test_name,
-         total_allowed_accuracy_reduction, is_to_split_cv=False):
+         total_allowed_accuracy_reduction, is_to_split_cv=False, can_do_more_then_one_loop = False):
     actions = {
         0: 1,
         1: 0.9,
@@ -150,7 +151,8 @@ def main(dataset_name, is_learn_new_layers_only, test_name,
         split_dataset_to_train_test(base_path)
 
     init_conf_values(actions, is_learn_new_layers_only=is_learn_new_layers_only, num_epoch=100,
-                     total_allowed_accuracy_reduction=total_allowed_accuracy_reduction)
+                     total_allowed_accuracy_reduction=total_allowed_accuracy_reduction,
+                     can_do_more_then_one_loop=can_do_more_then_one_loop)
     models_path = load_models_path(base_path, 'train')
 
     agent = A2C_Agent_Reinforce(models_path)
@@ -178,7 +180,7 @@ def extract_args_from_cmd():
     parser.add_argument('--learn_new_layers_only', type=bool, const=True, default=False, nargs='?')
     parser.add_argument('--split', type=bool, const=True, default=False, nargs='?')
     parser.add_argument('--allowed_reduction_acc', type=int, nargs='?')
-
+    parser.add_argument('--can_do_more_then_one_loop', type=bool, const=True, default=False, nargs='?')
 
     args = parser.parse_args()
     return args
@@ -189,4 +191,5 @@ if __name__ == "__main__":
     test_name = f'Agent_{args.dataset_name}_learn_new_layers_only_{args.learn_new_layers_only}_acc_reduction_{args.allowed_reduction_acc}'
     main(dataset_name=args.dataset_name, is_learn_new_layers_only=args.learn_new_layers_only,test_name=test_name,
          is_to_split_cv=args.split,
-         total_allowed_accuracy_reduction=args.allowed_reduction_acc)
+         total_allowed_accuracy_reduction=args.allowed_reduction_acc,
+         can_do_more_then_one_loop=args.can_do_more_then_one_loop)

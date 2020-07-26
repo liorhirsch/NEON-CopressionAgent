@@ -1,5 +1,5 @@
 import copy
-from typing import Dict, Type
+from typing import Dict, Type, List
 
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -21,10 +21,13 @@ flatten_list = lambda l: [item for sublist in l for item in sublist]
 class NetworkEnv:
     loaded_model: LoadedModel
     current_model: nn.Module
+    actions_history: List[float]
 
-    def __init__(self, networks_path):
+    def __init__(self, networks_path, can_do_more_then_one_loop = False):
         # self.networks_path = [networks_path[0]]
         self.all_networks = []
+        self.can_do_more_then_one_loop = can_do_more_then_one_loop
+
         self.networks_path = networks_path
         for group in networks_path:
             x_path = group[0]
@@ -52,6 +55,7 @@ class NetworkEnv:
         :return: state includes the network and the train data
         """
         self.layer_index = 1
+        self.actions_history = []
         # selected_net_group_index = np.random.choice(len(self.networks_path), 1)[0]
         # selected_net_group = self.networks_path[selected_net_group_index]
         # x_path = selected_net_group[0]
@@ -125,8 +129,24 @@ class NetworkEnv:
         fm = self.feature_extractor.extract_features(self.layer_index - 1)
 
         # Compute done
-        done = self.layer_index == len(self.feature_extractor.model_with_rows.all_rows)
+        number_of_layers = len(self.feature_extractor.model_with_rows.all_rows)
+        if not self.can_do_more_then_one_loop:
+            done = self.layer_index == number_of_layers
+        else:
+            self.actions_history.append(action)
+            self.layer_index = max(1, self.layer_index % number_of_layers)
+            done = self.is_done_more_them_one_loop(number_of_layers)
         return fm, reward, done
+
+    def is_done_more_them_one_loop(self, number_of_layers, max_itres = 4):
+        """
+        Checks if all last updates are 0 OR if the agent went through the whole layers max_iterations times
+        :param number_of_layers:
+        :param max_itres:
+        :return:
+        """
+        return all(a == 1 for a in self.actions_history[-number_of_layers:]) or \
+               len(self.actions_history) == max_itres * number_of_layers
 
     def compute_reward1(self, curr_model, new_model, new_acc, prev_acc, mission_type):
         """

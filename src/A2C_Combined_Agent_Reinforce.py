@@ -26,7 +26,7 @@ class A2C_Combined_Agent_Reinforce():
         self.actor_critic_model = ActorCritic(self.device, self.num_actions).to(self.device)
         self.optimizer = optim.Adam(self.actor_critic_model.parameters(), self.lr)
 
-        self.env = NetworkEnv(models_path)
+        self.env = NetworkEnv(models_path, StaticConf.getInstance().conf_values.can_do_more_then_one_loop)
 
     def compute_returns(self, next_value, rewards, masks, gamma=0.99):
         R = next_value

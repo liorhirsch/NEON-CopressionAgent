@@ -41,7 +41,7 @@ class A2C_Agent_Reinforce():
         self.actor_optimizer = optim.Adam(self.actor_model.parameters(), self.lr)
         self.critic_optimizer = optim.Adam(self.critic_model.parameters(), self.lr)
 
-        self.env = NetworkEnv(models_path)
+        self.env = NetworkEnv(models_path, StaticConf.getInstance().conf_values.can_do_more_then_one_loop)
 
     def compute_returns(self, next_value, rewards, masks, gamma=0.99):
         R = next_value
