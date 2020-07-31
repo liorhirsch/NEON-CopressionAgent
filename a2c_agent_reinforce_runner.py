@@ -85,7 +85,7 @@ def get_model_layers(model):
 
 def evaluate_model(mode, base_path, agent):
     models_path = load_models_path(base_path, mode)
-    env = NetworkEnv(models_path)
+    env = NetworkEnv(models_path, StaticConf.getInstance().conf_values.can_do_more_then_one_loop)
     action_to_compression = {
         0: 1,
         1: 0.9,

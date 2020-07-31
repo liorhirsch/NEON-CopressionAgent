@@ -145,7 +145,7 @@ class NetworkEnv:
         :param max_itres:
         :return:
         """
-        return all(a == 1 for a in self.actions_history[-number_of_layers:]) or \
+        return (len(self.actions_history) >= number_of_layers and all(a == 1 for a in self.actions_history[-number_of_layers:]))  or \
                len(self.actions_history) == max_itres * number_of_layers
 
     def compute_reward1(self, curr_model, new_model, new_acc, prev_acc, mission_type):
