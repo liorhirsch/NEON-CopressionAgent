@@ -156,11 +156,6 @@ def main(is_learn_new_layers_only, test_name,
                      total_allowed_accuracy_reduction=total_allowed_accuracy_reduction,
                      can_do_more_then_one_loop=can_do_more_then_one_loop)
 
-    for d in datasets:
-        if not os.path.exists(join(base_path, d, "train_models.csv")):
-                split_dataset_to_train_test(join(base_path, d))
-
-
     train_models_path = [load_models_path(join(base_path, dataset_name), 'train') for dataset_name in train_datasets]
     test_models_path = [load_models_path(join(base_path, dataset_name), 'train') for dataset_name in test_datasets]
     flatten = lambda l: [item for sublist in l for item in sublist]
