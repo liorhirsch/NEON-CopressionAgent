@@ -60,7 +60,7 @@ class A2C_Agent_Reinforce():
         reward_not_improving = False
         action_to_compression = StaticConf.getInstance().conf_values.action_to_compression_rate
 
-        while self.episode_idx < 100 or (not reward_not_improving):
+        while self.episode_idx < (len(self.env.all_networks) * 10) or (not reward_not_improving):
             print("Episode {}/{}".format(self.episode_idx, self.num_episodes))
             state = self.env.reset()
             log_probs = []
