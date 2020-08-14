@@ -180,7 +180,7 @@ class NetworkEnv:
 
     def compute_reward3(self, curr_model, new_model, new_acc, prev_acc, mission_type, action):
         total_allowed_accuracy_reduction = StaticConf.getInstance().conf_values.total_allowed_accuracy_reduction
-        layer_reduction_size = action * 100
+        layer_reduction_size = (1 - action) * 100
 
         delta_acc = (new_acc - prev_acc) * 100
 
@@ -189,7 +189,7 @@ class NetworkEnv:
         elif delta_acc > total_allowed_accuracy_reduction:
             reward = layer_reduction_size ** 3
         else:
-            reward = action
+            reward = layer_reduction_size
 
         return reward
 
