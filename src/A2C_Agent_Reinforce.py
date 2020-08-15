@@ -68,9 +68,10 @@ class A2C_Agent_Reinforce():
             rewards = []
             masks = []
             entropy = 0
+            done = False
 
             # rollout trajectory
-            for _ in range(self.num_steps):
+            while not done:
                 value = self.critic_model(state)
                 dist = self.actor_model(state)
 
