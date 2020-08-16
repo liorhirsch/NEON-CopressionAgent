@@ -20,6 +20,7 @@ from src.Configuration.ConfigurationValues import ConfigurationValues
 from src.Configuration.StaticConf import StaticConf
 from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX
 from src.NetworkEnv import NetworkEnv
+import torch.nn.utils.prune as prune
 
 
 def load_models_path(main_path, mode='train'):
@@ -85,59 +86,47 @@ def get_model_layers(model):
                      new_model_with_rows.all_rows]
     return str(linear_layers)
 
-def prune(env: NetworkEnv):
-    prune_percentage = [.0, .25, .50, .60, .70, .80, .90, .95, .97, .99]
+
+def prune_model(env: NetworkEnv, prune_percentage):
     accuracies_wp = []
     accuracies_np = []
 
     # Get the accuracy without any pruning
     initial_accuracy = env.original_acc
-    accuracies_wp.append(initial_accuracy)
     accuracies_np.append(initial_accuracy)
 
-    for k in prune_percentage[1:]:
-        model = deepcopy(env.current_model)
+    model = deepcopy(env.current_model)
 
-        for _ in range(4):
-            pruned_weights = []
-            weights = model.state_dict()
-            layers = list(model.state_dict())
-            ranks = {}
+    for _ in range(4):
+        pruned_weights = []
+        weights = model.state_dict()
+        layers = list(model.state_dict())
+        ranks = {}
+        pruning_layers = {}
 
-            for l in layers[:-1]:
-                data = weights[l]
-                if 'Weight' in l.title() and data.ndim > 1:
-                    w = np.array(data)
-                    # taking norm for each neuron
-                    norm = np.linalg.norm(w, axis=0)
-                    # repeat the norm values to get the shape similar to that of layer weights
-                    norm = np.tile(norm, (w.shape[0], 1))
-                    # norm = np.tile(norm, (w.shape[0]))
-                    ranks[l] = (rankdata(norm, method='dense') - 1).astype(int).reshape(norm.shape)
-                    lower_bound_rank = np.ceil(np.max(ranks[l]) * k).astype(int)
-                    ranks[l][ranks[l] <= lower_bound_rank] = 0
-                    ranks[l][ranks[l] > lower_bound_rank] = 1
-                    w = w * ranks[l]
-                    data[...] = torch.from_numpy(w)
-                pruned_weights.append(data)
-            pruned_weights.append(weights[layers[-1]])
-            new_state_dict = OrderedDict()
-            for l, pw in zip(layers, pruned_weights):
-                new_state_dict[l] = pw
-            model.load_state_dict(new_state_dict)
+        for l in list(model.modules()):
+            if type(l) is torch.nn.Linear:
+                prune.l1_unstructured(l, name='weight', amount=prune_percentage)
+        new_lh = env.create_learning_handler(model)
+        new_lh.unfreeze_all_layers()
+        new_lh.train_model()
+        new_acc = new_lh.evaluate_model()
 
-            new_lh = env.create_learning_handler(model)
-            new_lh.unfreeze_all_layers()
-            new_lh.train_model()
-            new_acc = new_lh.evaluate_model()
+        num_params = calc_num_parameters(model)
+        pruned_params = sum(list(
+            map(lambda x: (x.weight_mask == 0).sum(), filter(lambda x: hasattr(x, 'weight_mask'), model.modules()))))
+        pruned_params = int(pruned_params)
 
-            accuracies_np.append(new_acc)
+        accuracies_np.append((num_params, pruned_params, new_acc))
 
-    return accuracies_np
+    return accuracies_np[-1]
 
 
+def calc_num_parameters(model):
+    return sum(p.numel() for p in model.parameters())
 
-def evaluate_model(mode, base_path):
+
+def evaluate_model(mode, base_path, curr_prune_percentage):
     models_path = load_models_path(base_path, mode)
     env = NetworkEnv(models_path, StaticConf.getInstance().conf_values.can_do_more_then_one_loop)
     action_to_compression = {
@@ -154,26 +143,18 @@ def evaluate_model(mode, base_path):
     for i in range(len(env.all_networks)):
         print(i)
         state = env.reset()
-
-        new_lh = env.create_learning_handler(env.current_model)
-        prune(env)
         origin_lh = env.create_learning_handler(env.loaded_model.model)
-
-        new_acc = new_lh.evaluate_model()
         origin_acc = origin_lh.evaluate_model()
 
-        new_params = env.calc_num_parameters(env.current_model)
-        origin_params = env.calc_num_parameters(env.loaded_model.model)
+        num_params, pruned_params, new_acc = prune_model(env, curr_prune_percentage)
 
         model_name = env.all_networks[env.net_order[env.curr_net_index - 1]][1]
-
-        new_model_with_rows = ModelWithRows(env.current_model)
 
         results = results.append({'model': model_name,
                                   'new_acc': new_acc,
                                   'origin_acc': origin_acc,
-                                  'new_param': new_params,
-                                  'origin_param': origin_params,
+                                  'new_param': num_params - pruned_params,
+                                  'origin_param': num_params,
                                   'new_model_arch': get_model_layers(env.current_model),
                                   'origin_model_arch': get_model_layers(env.loaded_model.model)}, ignore_index=True)
 
@@ -181,7 +162,7 @@ def evaluate_model(mode, base_path):
 
 
 def main(dataset_name, is_learn_new_layers_only, test_name,
-         is_to_split_cv=False, can_do_more_then_one_loop = False):
+         is_to_split_cv=False, can_do_more_then_one_loop=False):
     actions = {
         0: 1,
         1: 0.9,
@@ -196,18 +177,16 @@ def main(dataset_name, is_learn_new_layers_only, test_name,
 
     init_conf_values(actions, is_learn_new_layers_only=is_learn_new_layers_only, num_epoch=10,
                      can_do_more_then_one_loop=can_do_more_then_one_loop)
-    mode = 'test'
-    results = evaluate_model(mode, base_path)
-    results.to_csv(f"./models/Reinforce_One_Dataset/results_{test_name}_{mode}.csv")
+    prune_percentages = [.01, .05, .1, .25, .50, .60, .70, .80, .90]
 
-    mode = 'train'
-    results = evaluate_model(mode, base_path)
-    results.to_csv(f"./models/Reinforce_One_Dataset/results_{test_name}_{mode}.csv")
+    for curr_prune_percentage in prune_percentages:
+        mode = 'test'
+        results = evaluate_model(mode, base_path, curr_prune_percentage)
+        results.to_csv(f"./models/Reinforce_One_Dataset/results_{test_name}_{mode}_pp_{curr_prune_percentage}.csv")
 
-
-
-
-
+        mode = 'train'
+        results = evaluate_model(mode, base_path, curr_prune_percentage)
+        results.to_csv(f"./models/Reinforce_One_Dataset/results_{test_name}_{mode}_pp_{curr_prune_percentage}.csv")
 
 
 def extract_args_from_cmd():
@@ -226,6 +205,6 @@ if __name__ == "__main__":
     args = extract_args_from_cmd()
     with_loops = '_with_loop' if args.can_do_more_then_one_loop else ""
     test_name = f'Agent_{args.dataset_name}_learn_new_layers_only_{args.learn_new_layers_only}_{with_loops}_Random_Actions'
-    main(dataset_name=args.dataset_name, is_learn_new_layers_only=args.learn_new_layers_only,test_name=test_name,
+    main(dataset_name=args.dataset_name, is_learn_new_layers_only=args.learn_new_layers_only, test_name=test_name,
          is_to_split_cv=args.split,
          can_do_more_then_one_loop=args.can_do_more_then_one_loop)
