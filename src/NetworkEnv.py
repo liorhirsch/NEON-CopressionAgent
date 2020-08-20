@@ -47,7 +47,7 @@ class NetworkEnv:
 
     def create_train_test_splits(self):
         self.cross_validation_obj = CrossValidationObject(
-            *train_test_split(self.X_data.values, self.Y_data.values, test_size=0.2))
+            *train_test_split(self.X_data.values, self.Y_data.values, test_size=0.2, random_state=0))
 
     def reset(self):
         """
