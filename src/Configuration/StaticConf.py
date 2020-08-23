@@ -15,7 +15,8 @@ class StaticConf:
     def __init__(self, conf_values: ConfigurationValues):
         """ Virtually private constructor. """
         if StaticConf.__instance != None:
-            raise Exception("This class is a singleton!")
+            pass
+            # raise Exception("This class is a singleton!")
         else:
             StaticConf.__instance = self
             self.conf_values = conf_values

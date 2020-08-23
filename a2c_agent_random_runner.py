@@ -12,6 +12,7 @@ from sklearn.model_selection import train_test_split
 from torch import nn
 from NetworkFeatureExtration.src.ModelWithRows import ModelWithRows
 from src.A2C_Agent_Reinforce import A2C_Agent_Reinforce
+import glob
 
 from src.Configuration.ConfigurationValues import ConfigurationValues
 from src.Configuration.StaticConf import StaticConf
@@ -142,6 +143,7 @@ def main(dataset_name, is_learn_new_layers_only, test_name,
         3: 0.7,
         4: 0.6
     }
+
     base_path = f"./OneDatasetLearning/Classification/{dataset_name}/"
 
     if is_to_split_cv:
@@ -149,18 +151,15 @@ def main(dataset_name, is_learn_new_layers_only, test_name,
 
     init_conf_values(actions, is_learn_new_layers_only=is_learn_new_layers_only, num_epoch=100,
                      can_do_more_then_one_loop=can_do_more_then_one_loop)
-    mode = 'test'
-    results = evaluate_model(mode, base_path)
-    results.to_csv(f"./models/Reinforce_One_Dataset/results_{test_name}_{mode}.csv")
+
+    if dataset_name not in ['mfeat-morphological', 'first-order-theorem-proving']:
+        mode = 'test'
+        results = evaluate_model(mode, base_path)
+        results.to_csv(f"./models/Reinforce_One_Dataset/results_{test_name}_{mode}.csv")
 
     mode = 'train'
     results = evaluate_model(mode, base_path)
     results.to_csv(f"./models/Reinforce_One_Dataset/results_{test_name}_{mode}.csv")
-
-
-
-
-
 
 
 def extract_args_from_cmd():
@@ -177,8 +176,17 @@ def extract_args_from_cmd():
 
 if __name__ == "__main__":
     args = extract_args_from_cmd()
-    with_loops = '_with_loop' if args.can_do_more_then_one_loop else ""
-    test_name = f'Agent_{args.dataset_name}_learn_new_layers_only_{args.learn_new_layers_only}_{with_loops}_Random_Actions'
-    main(dataset_name=args.dataset_name, is_learn_new_layers_only=args.learn_new_layers_only,test_name=test_name,
-         is_to_split_cv=args.split,
-         can_do_more_then_one_loop=args.can_do_more_then_one_loop)
+
+    all_datasets = glob.glob("./OneDatasetLearning/Classification/*")
+
+    dataset_sizes = list(map(lambda x: x.shape[0], map(lambda x: pd.read_csv(os.path.join(x, "X_to_train.csv")), all_datasets)))
+    dataset_with_size = sorted(zip(all_datasets, dataset_sizes), key=lambda x:x[1])
+
+    for curr_dataset, _ in dataset_with_size[10:]:
+        args.dataset_name = os.path.basename(curr_dataset)
+        print(args.dataset_name)
+        with_loops = '_with_loop' if args.can_do_more_then_one_loop else ""
+        test_name = f'Agent_{args.dataset_name}_learn_new_layers_only_{args.learn_new_layers_only}_{with_loops}_Random_Actions'
+        main(dataset_name=args.dataset_name, is_learn_new_layers_only=args.learn_new_layers_only,test_name=test_name,
+             is_to_split_cv=args.split,
+             can_do_more_then_one_loop=args.can_do_more_then_one_loop)
