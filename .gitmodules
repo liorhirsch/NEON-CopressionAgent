@@ -1,6 +1,3 @@
 [submodule "NetworkFeatureExtration"]
 	path = NetworkFeatureExtration
 	url = https://github.com/liorhirsch/NetworkFeatureExtration.git
-[submodule "lookahead_pruning"]
-	path = lookahead_pruning
-	url = https://github.com/alinlab/lookahead_pruning.git

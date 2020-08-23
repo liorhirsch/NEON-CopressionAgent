@@ -6,14 +6,17 @@ from copy import deepcopy
 from datetime import datetime
 import sys
 import argparse
+from functools import partial
+
 import numpy as np
 import pandas as pd
 import torch
 from pandas import DataFrame
 from scipy.stats import rankdata
 from sklearn.model_selection import train_test_split
-from torch import nn
+from torch import nn, optim
 from NetworkFeatureExtration.src.ModelWithRows import ModelWithRows
+from lookahead_pruning.method import get_method
 from src.A2C_Agent_Reinforce import A2C_Agent_Reinforce
 
 from src.Configuration.ConfigurationValues import ConfigurationValues
@@ -87,39 +90,91 @@ def get_model_layers(model):
     return str(linear_layers)
 
 
-def prune_model(env: NetworkEnv, prune_percentage):
-    accuracies_wp = []
-    accuracies_np = []
+def look_ahead_prune_model(env: NetworkEnv):
+    accuracies = []
+    network = env.current_model
+    prune_ratios = [.5, .5, .5, .5, .25]
 
-    # Get the accuracy without any pruning
-    initial_accuracy = env.original_acc
-    accuracies_np.append(initial_accuracy)
+    optimizer = partial(optim.Adam, lr=0.0012)
+    pruning_iteration_start = 1
+    pruning_iteration_end = 30
+    pretrain_iteration = 50000
+    finetune_iteration = 50000
+    batch_size = 60
+    pruning_type = 'iterative'
 
-    model = deepcopy(env.current_model)
+    original_network = network  # keep the original network
+    original_prune_ratio = prune_ratios  # keep the original prune ratio
+    pruning_method = get_method('lap') # lap = look-ahead-pruning
 
-    for _ in range(4):
-        pruned_weights = []
-        weights = model.state_dict()
-        layers = list(model.state_dict())
-        ranks = {}
-        pruning_layers = {}
+    for it in range(args.pruning_iteration_start, args.pruning_iteration_end + 1):
+        print(f'Pruning iter. {it}')
 
-        for l in list(model.modules()):
-            if type(l) is torch.nn.Linear:
-                prune.l1_unstructured(l, name='weight', amount=prune_percentage)
-        new_lh = env.create_learning_handler(model)
+        # get pruning ratio for current iteration
+        # list for layer-wise pruning, and constant for global pruning
+        if pruning_type == 'oneshot':
+            network = deepcopy(original_network).cuda()
+            prune_ratios = []
+            for idx in range(len(original_prune_ratio)):
+                prune_ratios.append(1.0 - ((1.0 - original_prune_ratio[idx]) ** it))
+        elif pruning_type == 'iterative':
+            prune_ratios = []
+            for idx in range(len(original_prune_ratio)):
+                prune_ratios.append(original_prune_ratio[idx])
+        elif pruning_type == 'global':
+            network = deepcopy(original_network).cuda()
+            prune_ratios = [original_prune_ratio[it - 1]]
+        else:
+            raise ValueError('Unknown pruning_type')
+
+        # perpare weights and masks to prune
+        weights = network.get_weights()
+        masks = network.get_masks()
+
+        # if 'lap_act' in args.method:
+        #     act_rate = get_activation(network, train_dataset)
+        #     assert len(act_rate) == len(weights) - 1
+        #     for i in range(len(weights) - 1):
+        #         if len(act_rate[i].shape) == 1:
+        #             act = act_rate[i].sqrt()
+        #             size = list(act.shape)
+        #             size = [size[0], 1]
+        #             act = act.view(size).repeat([1, weights[i].shape[1]])
+        #             weights[i] *= act
+        #         elif len(act_rate[i].shape) == 3:
+        #             act = act_rate[i].sqrt().sum(dim=1).sum(dim=1)
+        #             size = list(act.shape)
+        #             size = [size[0], 1, 1, 1]
+        #             act = act.view(size).repeat([1, weights[i].shape[1], weights[i].shape[2], weights[i].shape[3]])
+        #             weights[i] *= act
+        #         else:
+        #             assert False
+
+        # if 'obd' in args.method:
+        #     assert 'bn' not in args.method  # OBD for BN is not implemented
+        #     masks = pruning_method(deepcopy(network), train_dataset, prune_ratios, args.network, args.dataset)
+        # elif 'bn' in args.method:
+        #     masks = pruning_method(weights, masks, prune_ratios, network.get_bn_weights())
+        # else:
+        masks = pruning_method(weights, masks, prune_ratios)
+
+        network.set_masks(masks)
+
+        new_lh = env.create_learning_handler(network)
         new_lh.unfreeze_all_layers()
         new_lh.train_model()
         new_acc = new_lh.evaluate_model()
 
-        num_params = calc_num_parameters(model)
+        num_params = calc_num_parameters(network)
         pruned_params = sum(list(
-            map(lambda x: (x.weight_mask == 0).sum(), filter(lambda x: hasattr(x, 'weight_mask'), model.modules()))))
+            map(lambda x: (x.weight_mask == 0).sum(), filter(lambda x: hasattr(x, 'weight_mask'), network.modules()))))
         pruned_params = int(pruned_params)
 
-        accuracies_np.append((num_params, pruned_params, new_acc))
+        accuracies.append((num_params, pruned_params, new_acc))
 
-    return accuracies_np[-1]
+    return accuracies[-1]
+
+
 
 
 def calc_num_parameters(model):
@@ -146,7 +201,7 @@ def evaluate_model(mode, base_path, curr_prune_percentage):
         origin_lh = env.create_learning_handler(env.loaded_model.model)
         origin_acc = origin_lh.evaluate_model()
 
-        num_params, pruned_params, new_acc = prune_model(env, curr_prune_percentage)
+        num_params, pruned_params, new_acc = look_ahead_prune_model(env, curr_prune_percentage)
 
         model_name = env.all_networks[env.net_order[env.curr_net_index - 1]][1]
 
