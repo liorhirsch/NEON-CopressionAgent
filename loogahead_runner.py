@@ -103,16 +103,10 @@ def prune_model(env: NetworkEnv, prune_percentage):
         layers = list(model.state_dict())
         ranks = {}
         pruning_layers = {}
-        parameters_to_prune = []
-
-
 
         for l in list(model.modules()):
             if type(l) is torch.nn.Linear:
-                parameters_to_prune.append((l, 'weight'))
-                # prune.l1_unstructured(l, name='weight', amount=prune_percentage)
-
-        prune.global_unstructured(parameters_to_prune, pruning_method=prune.L1Unstructured, amount = prune_percentage)
+                prune.l1_unstructured(l, name='weight', amount=prune_percentage)
         new_lh = env.create_learning_handler(model)
         new_lh.unfreeze_all_layers()
         new_lh.train_model()
