@@ -16,10 +16,10 @@ from scipy.stats import rankdata
 from sklearn.model_selection import train_test_split
 from torch import nn, optim
 from NetworkFeatureExtration.src.ModelWithRows import ModelWithRows
-from lookahead_pruning.method import get_method
-from lookahead_pruning.network.masked_modules import MaskedLinearPreTrained
-from lookahead_pruning.network.masked_pre_trained_mlp import MaskedPreTrainedMLP
-from lookahead_pruning.utils import is_masked_module
+from lookahead_pruning1.method import get_method
+from lookahead_pruning1.network.masked_modules import MaskedLinearPreTrained
+from lookahead_pruning1.network.masked_pre_trained_mlp import MaskedPreTrainedMLP
+from lookahead_pruning1.utils import is_masked_module
 from src.A2C_Agent_Reinforce import A2C_Agent_Reinforce
 
 from src.Configuration.ConfigurationValues import ConfigurationValues
