@@ -17,6 +17,9 @@ from sklearn.model_selection import train_test_split
 from torch import nn, optim
 from NetworkFeatureExtration.src.ModelWithRows import ModelWithRows
 from lookahead_pruning.method import get_method
+from lookahead_pruning.network.masked_modules import MaskedLinearPreTrained
+from lookahead_pruning.network.masked_pre_trained_mlp import MaskedPreTrainedMLP
+from lookahead_pruning.utils import is_masked_module
 from src.A2C_Agent_Reinforce import A2C_Agent_Reinforce
 
 from src.Configuration.ConfigurationValues import ConfigurationValues
@@ -82,7 +85,6 @@ def get_linear_layer(row):
         if type(l) is nn.Linear:
             return l
 
-
 def get_model_layers(model):
     new_model_with_rows = ModelWithRows(model)
     linear_layers = [(get_linear_layer(x).in_features, get_linear_layer(x).out_features) for x in
@@ -90,25 +92,66 @@ def get_model_layers(model):
     return str(linear_layers)
 
 
+def set_weights(self, weights_to_set):
+    idx = 0
+    for m in self.modules():
+        if is_masked_module(m):
+            m.weight.data = weights_to_set[idx].cpu().to(m.weight.data.device)
+            idx += 1
+    assert idx == len(weights_to_set)
+
+def set_masks(self, mask_to_set):
+    idx = 0
+    for m in self.modules():
+        if is_masked_module(m):
+            m.mask = mask_to_set[idx].cpu().to(m.mask.device)
+            m.weight.data *= m.mask
+            idx += 1
+    assert idx == len(mask_to_set)
+
+def get_weights(self):
+    weights = []
+    for m in self.modules():
+        if is_masked_module(m):
+            weights.append(m.weight.data.cpu().detach())
+    return weights
+
+def get_masks(self):
+    masks = []
+    for m in self.modules():
+        if is_masked_module(m):
+            masks.append(m.mask.cpu().detach())
+    return masks
+
+
 def look_ahead_prune_model(env: NetworkEnv):
     accuracies = []
-    network = env.current_model
-    prune_ratios = [.5, .5, .5, .5, .25]
+    network = MaskedPreTrainedMLP(env.current_model)
+    amount_of_linear_layers = len(list(filter(lambda x: type(x) is MaskedLinearPreTrained, network.modules()))) - 1
+    prune_ratios = [.5] * (amount_of_linear_layers)
+    prune_ratios.append(.25)
+
+    # prune_ratios = [.5, .5, .5, .5, .25]
 
     optimizer = partial(optim.Adam, lr=0.0012)
     pruning_iteration_start = 1
-    pruning_iteration_end = 30
+    pruning_iteration_end = 10
     pretrain_iteration = 50000
     finetune_iteration = 50000
     batch_size = 60
-    pruning_type = 'iterative'
+    pruning_type = 'oneshot'
 
     original_network = network  # keep the original network
     original_prune_ratio = prune_ratios  # keep the original prune ratio
-    pruning_method = get_method('lap') # lap = look-ahead-pruning
+    pruning_method = get_method('lap')  # lap = look-ahead-pruning
+    # network.set_weights = set_weights
+    # network.set_masks = set_masks
+    # network.get_weights = get_weights
+    # network.get_masks = get_masks
 
-    for it in range(args.pruning_iteration_start, args.pruning_iteration_end + 1):
+    for it in range(pruning_iteration_start, pruning_iteration_end + 1):
         print(f'Pruning iter. {it}')
+
 
         # get pruning ratio for current iteration
         # list for layer-wise pruning, and constant for global pruning
@@ -116,7 +159,7 @@ def look_ahead_prune_model(env: NetworkEnv):
             network = deepcopy(original_network).cuda()
             prune_ratios = []
             for idx in range(len(original_prune_ratio)):
-                prune_ratios.append(1.0 - ((1.0 - original_prune_ratio[idx]) ** it))
+                prune_ratios.append((1.0 - original_prune_ratio[idx]) ** it)
         elif pruning_type == 'iterative':
             prune_ratios = []
             for idx in range(len(original_prune_ratio)):
@@ -160,28 +203,26 @@ def look_ahead_prune_model(env: NetworkEnv):
 
         network.set_masks(masks)
 
-        new_lh = env.create_learning_handler(network)
-        new_lh.unfreeze_all_layers()
-        new_lh.train_model()
+        new_lh = env.create_learning_handler(network.cuda())
+        # new_lh.unfreeze_all_layers()
+        # new_lh.train_model()
         new_acc = new_lh.evaluate_model()
 
         num_params = calc_num_parameters(network)
         pruned_params = sum(list(
-            map(lambda x: (x.weight_mask == 0).sum(), filter(lambda x: hasattr(x, 'weight_mask'), network.modules()))))
+            map(lambda x: (x.mask == 0).sum(), filter(lambda x: hasattr(x, 'mask'), network.modules()))))
         pruned_params = int(pruned_params)
 
         accuracies.append((num_params, pruned_params, new_acc))
 
-    return accuracies[-1]
-
-
+    return max(accuracies, key = lambda x: x[2])
 
 
 def calc_num_parameters(model):
     return sum(p.numel() for p in model.parameters())
 
 
-def evaluate_model(mode, base_path, curr_prune_percentage):
+def evaluate_model(mode, base_path):
     models_path = load_models_path(base_path, mode)
     env = NetworkEnv(models_path, StaticConf.getInstance().conf_values.can_do_more_then_one_loop)
     action_to_compression = {
@@ -201,7 +242,7 @@ def evaluate_model(mode, base_path, curr_prune_percentage):
         origin_lh = env.create_learning_handler(env.loaded_model.model)
         origin_acc = origin_lh.evaluate_model()
 
-        num_params, pruned_params, new_acc = look_ahead_prune_model(env, curr_prune_percentage)
+        num_params, pruned_params, new_acc = look_ahead_prune_model(env)
 
         model_name = env.all_networks[env.net_order[env.curr_net_index - 1]][1]
 
@@ -232,16 +273,14 @@ def main(dataset_name, is_learn_new_layers_only, test_name,
 
     init_conf_values(actions, is_learn_new_layers_only=is_learn_new_layers_only, num_epoch=10,
                      can_do_more_then_one_loop=can_do_more_then_one_loop)
-    prune_percentages = [.01, .05, .1, .25, .50, .60, .70, .80, .90]
+    # prune_percentages = [.01, .05, .1, .25, .50, .60, .70, .80, .90]
+    mode = 'test'
+    results = evaluate_model(mode, base_path)
+    results.to_csv(f"./models/Reinforce_One_Dataset/results_{test_name}_{mode}.csv")
 
-    for curr_prune_percentage in prune_percentages:
-        mode = 'test'
-        results = evaluate_model(mode, base_path, curr_prune_percentage)
-        results.to_csv(f"./models/Reinforce_One_Dataset/results_{test_name}_{mode}_pp_{curr_prune_percentage}.csv")
-
-        mode = 'train'
-        results = evaluate_model(mode, base_path, curr_prune_percentage)
-        results.to_csv(f"./models/Reinforce_One_Dataset/results_{test_name}_{mode}_pp_{curr_prune_percentage}.csv")
+    mode = 'train'
+    results = evaluate_model(mode, base_path)
+    results.to_csv(f"./models/Reinforce_One_Dataset/results_{test_name}_{mode}.csv")
 
 
 def extract_args_from_cmd():
@@ -259,7 +298,7 @@ def extract_args_from_cmd():
 if __name__ == "__main__":
     args = extract_args_from_cmd()
     with_loops = '_with_loop' if args.can_do_more_then_one_loop else ""
-    test_name = f'Agent_{args.dataset_name}_learn_new_layers_only_{args.learn_new_layers_only}_{with_loops}_Random_Actions'
+    test_name = f'Agent_{args.dataset_name}_learn_new_layers_only_{args.learn_new_layers_only}_LAP'
     main(dataset_name=args.dataset_name, is_learn_new_layers_only=args.learn_new_layers_only, test_name=test_name,
          is_to_split_cv=args.split,
          can_do_more_then_one_loop=args.can_do_more_then_one_loop)

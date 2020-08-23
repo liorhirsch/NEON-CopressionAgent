@@ -125,7 +125,7 @@ def prune_model(env: NetworkEnv, prune_percentage):
 
         accuracies_np.append((num_params, pruned_params, new_acc))
 
-    return accuracies_np[-1]
+    return max(accuracies_np, key = lambda x: x[2])
 
 
 def calc_num_parameters(model):
