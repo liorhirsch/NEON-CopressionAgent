@@ -1,5 +1,5 @@
 # from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX - must be import!!!!
-
+import glob
 import os
 from collections import OrderedDict
 from copy import deepcopy
@@ -257,8 +257,7 @@ def evaluate_model(mode, base_path):
     return results
 
 
-def main(dataset_name, is_learn_new_layers_only, test_name,
-         is_to_split_cv=False, can_do_more_then_one_loop=False):
+def main(dataset_name, test_name):
     actions = {
         0: 1,
         1: 0.9,
@@ -268,11 +267,7 @@ def main(dataset_name, is_learn_new_layers_only, test_name,
     }
     base_path = f"./OneDatasetLearning/Classification/{dataset_name}/"
 
-    if is_to_split_cv:
-        split_dataset_to_train_test(base_path)
-
-    init_conf_values(actions, is_learn_new_layers_only=is_learn_new_layers_only, num_epoch=10,
-                     can_do_more_then_one_loop=can_do_more_then_one_loop)
+    init_conf_values(actions, num_epoch=10)
     # prune_percentages = [.01, .05, .1, .25, .50, .60, .70, .80, .90]
     mode = 'test'
     results = evaluate_model(mode, base_path)
@@ -286,19 +281,26 @@ def main(dataset_name, is_learn_new_layers_only, test_name,
 def extract_args_from_cmd():
     parser = argparse.ArgumentParser(description='')
     # parser.add_argument('--test_name', type=str)
-    parser.add_argument('--dataset_name', type=str)
-    parser.add_argument('--learn_new_layers_only', type=bool, const=True, default=False, nargs='?')
-    parser.add_argument('--split', type=bool, const=True, default=False, nargs='?')
-    parser.add_argument('--can_do_more_then_one_loop', type=bool, const=True, default=False, nargs='?')
+    # parser.add_argument('--dataset_name', type=str)
+    # parser.add_argument('--learn_new_layers_only', type=bool, const=True, default=False, nargs='?')
+    # parser.add_argument('--split', type=bool, const=True, default=False, nargs='?')
+    # parser.add_argument('--can_do_more_then_one_loop', type=bool, const=True, default=False, nargs='?')
 
     args = parser.parse_args()
     return args
 
 
 if __name__ == "__main__":
-    args = extract_args_from_cmd()
-    with_loops = '_with_loop' if args.can_do_more_then_one_loop else ""
-    test_name = f'Agent_{args.dataset_name}_learn_new_layers_only_{args.learn_new_layers_only}_LAP'
-    main(dataset_name=args.dataset_name, is_learn_new_layers_only=args.learn_new_layers_only, test_name=test_name,
-         is_to_split_cv=args.split,
-         can_do_more_then_one_loop=args.can_do_more_then_one_loop)
+    # args = extract_args_from_cmd()
+
+    all_datasets = glob.glob("./OneDatasetLearning/Classification/*")
+
+    dataset_sizes = list(map(lambda x: x.shape[0], map(lambda x: pd.read_csv(os.path.join(x, "X_to_train.csv")), all_datasets)))
+    dataset_with_size = sorted(zip(all_datasets, dataset_sizes), key=lambda x:x[1])
+
+    for curr_dataset, _ in dataset_with_size[10:]:
+        dataset_name = os.path.basename(curr_dataset)
+        print(dataset_name)
+        test_name = f'Agent_{dataset_name}_LAP'
+        main(dataset_name=dataset_name, test_name=test_name)
+
