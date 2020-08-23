@@ -150,9 +150,6 @@ def look_ahead_prune_model(env: NetworkEnv):
     # network.get_masks = get_masks
 
     for it in range(pruning_iteration_start, pruning_iteration_end + 1):
-        print(f'Pruning iter. {it}')
-
-
         # get pruning ratio for current iteration
         # list for layer-wise pruning, and constant for global pruning
         if pruning_type == 'oneshot':
@@ -237,7 +234,6 @@ def evaluate_model(mode, base_path):
                                  'origin_param', 'new_model_arch', 'origin_model_arch'])
 
     for i in range(len(env.all_networks)):
-        print(i)
         state = env.reset()
         origin_lh = env.create_learning_handler(env.loaded_model.model)
         origin_acc = origin_lh.evaluate_model()
