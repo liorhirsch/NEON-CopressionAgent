@@ -135,7 +135,7 @@ def look_ahead_prune_model(env: NetworkEnv):
 
     optimizer = partial(optim.Adam, lr=0.0012)
     pruning_iteration_start = 1
-    pruning_iteration_end = 10
+    pruning_iteration_end = 4
     pretrain_iteration = 50000
     finetune_iteration = 50000
     batch_size = 60
@@ -212,7 +212,7 @@ def look_ahead_prune_model(env: NetworkEnv):
 
         accuracies.append((num_params, pruned_params, new_acc))
 
-    return max(accuracies, key = lambda x: x[2])
+    return accuracies[3]
 
 
 def calc_num_parameters(model):
@@ -297,6 +297,6 @@ if __name__ == "__main__":
     for curr_dataset, _ in dataset_with_size[10:]:
         dataset_name = os.path.basename(curr_dataset)
         print(dataset_name)
-        test_name = f'Agent_{dataset_name}_LAP'
+        test_name = f'Agent_{dataset_name}_LAP_4'
         main(dataset_name=dataset_name, test_name=test_name)
 
