@@ -97,26 +97,26 @@ def prune_model(env: NetworkEnv, prune_percentage):
 
     model = deepcopy(env.current_model)
 
-    for _ in range(4):
-        parameters_to_prune = []
+    # for _ in range(4):
+    parameters_to_prune = []
 
-        for l in list(model.modules()):
-            if type(l) is torch.nn.Linear:
-                parameters_to_prune.append((l, 'weight'))
-                # prune.l1_unstructured(l, name='weight', amount=prune_percentage)
+    for l in list(model.modules()):
+        if type(l) is torch.nn.Linear:
+            parameters_to_prune.append((l, 'weight'))
+            # prune.l1_unstructured(l, name='weight', amount=prune_percentage)
 
-        prune.global_unstructured(parameters_to_prune, pruning_method=prune.L1Unstructured, amount = prune_percentage)
-        new_lh = env.create_learning_handler(model)
-        new_lh.unfreeze_all_layers()
-        new_lh.train_model()
-        new_acc = new_lh.evaluate_model()
+    prune.global_unstructured(parameters_to_prune, pruning_method=prune.L1Unstructured, amount = prune_percentage)
+    new_lh = env.create_learning_handler(model)
+    new_lh.unfreeze_all_layers()
+    new_lh.train_model()
+    new_acc = new_lh.evaluate_model()
 
-        num_params = calc_num_parameters(model)
-        pruned_params = sum(list(
-            map(lambda x: (x.weight_mask == 0).sum(), filter(lambda x: hasattr(x, 'weight_mask'), model.modules()))))
-        pruned_params = int(pruned_params)
+    num_params = calc_num_parameters(model)
+    pruned_params = sum(list(
+        map(lambda x: (x.weight_mask == 0).sum(), filter(lambda x: hasattr(x, 'weight_mask'), model.modules()))))
+    pruned_params = int(pruned_params)
 
-        accuracies_np.append((num_params, pruned_params, new_acc))
+    accuracies_np.append((num_params, pruned_params, new_acc))
 
     return max(accuracies_np, key = lambda x: x[2])
 
