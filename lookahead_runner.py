@@ -135,7 +135,7 @@ def look_ahead_prune_model(env: NetworkEnv):
 
     optimizer = partial(optim.Adam, lr=0.0012)
     pruning_iteration_start = 1
-    pruning_iteration_end = 4
+    pruning_iteration_end = 1
     pretrain_iteration = 50000
     finetune_iteration = 50000
     batch_size = 60
@@ -212,7 +212,7 @@ def look_ahead_prune_model(env: NetworkEnv):
 
         accuracies.append((num_params, pruned_params, new_acc))
 
-    return accuracies[3]
+    return accuracies[0]
 
 
 def calc_num_parameters(model):
@@ -294,9 +294,9 @@ if __name__ == "__main__":
     dataset_sizes = list(map(lambda x: x.shape[0], map(lambda x: pd.read_csv(os.path.join(x, "X_to_train.csv")), all_datasets)))
     dataset_with_size = sorted(zip(all_datasets, dataset_sizes), key=lambda x:x[1])
 
-    for curr_dataset, _ in dataset_with_size[10:]:
+    for idx, (curr_dataset, _) in enumerate(dataset_with_size):
         dataset_name = os.path.basename(curr_dataset)
-        print(dataset_name)
-        test_name = f'Agent_{dataset_name}_LAP_4'
+        print(f"{dataset_name} {idx} / {len(dataset_with_size)}")
+        test_name = f'Agent_{dataset_name}_LAP_1'
         main(dataset_name=dataset_name, test_name=test_name)
 

@@ -1,5 +1,5 @@
 # from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX - must be import!!!!
-
+import glob
 import os
 from collections import OrderedDict
 from copy import deepcopy
@@ -93,19 +93,12 @@ def prune_model(env: NetworkEnv, prune_percentage):
 
     # Get the accuracy without any pruning
     initial_accuracy = env.original_acc
-    accuracies_np.append(initial_accuracy)
+    # accuracies_np.append(initial_accuracy)
 
     model = deepcopy(env.current_model)
 
     for _ in range(4):
-        pruned_weights = []
-        weights = model.state_dict()
-        layers = list(model.state_dict())
-        ranks = {}
-        pruning_layers = {}
         parameters_to_prune = []
-
-
 
         for l in list(model.modules()):
             if type(l) is torch.nn.Linear:
@@ -147,8 +140,8 @@ def evaluate_model(mode, base_path, curr_prune_percentage):
                                  'origin_param', 'new_model_arch', 'origin_model_arch'])
 
     for i in range(len(env.all_networks)):
-        print(i)
         state = env.reset()
+        print(i)
         origin_lh = env.create_learning_handler(env.loaded_model.model)
         origin_acc = origin_lh.evaluate_model()
 
@@ -167,8 +160,7 @@ def evaluate_model(mode, base_path, curr_prune_percentage):
     return results
 
 
-def main(dataset_name, is_learn_new_layers_only, test_name,
-         is_to_split_cv=False, can_do_more_then_one_loop=False):
+def main(dataset_name, test_name):
     actions = {
         0: 1,
         1: 0.9,
@@ -178,11 +170,7 @@ def main(dataset_name, is_learn_new_layers_only, test_name,
     }
     base_path = f"./OneDatasetLearning/Classification/{dataset_name}/"
 
-    if is_to_split_cv:
-        split_dataset_to_train_test(base_path)
-
-    init_conf_values(actions, is_learn_new_layers_only=is_learn_new_layers_only, num_epoch=10,
-                     can_do_more_then_one_loop=can_do_more_then_one_loop)
+    init_conf_values(actions, num_epoch=5)
     prune_percentages = [.01, .05, .1, .25, .50, .60, .70, .80, .90]
 
     for curr_prune_percentage in prune_percentages:
@@ -211,6 +199,14 @@ if __name__ == "__main__":
     args = extract_args_from_cmd()
     with_loops = '_with_loop' if args.can_do_more_then_one_loop else ""
     test_name = f'Agent_{args.dataset_name}_learn_new_layers_only_{args.learn_new_layers_only}_{with_loops}_pruning'
-    main(dataset_name=args.dataset_name, is_learn_new_layers_only=args.learn_new_layers_only, test_name=test_name,
-         is_to_split_cv=args.split,
-         can_do_more_then_one_loop=args.can_do_more_then_one_loop)
+
+    all_datasets = glob.glob("./OneDatasetLearning/Classification/*")
+
+    dataset_sizes = list(map(lambda x: x.shape[0], map(lambda x: pd.read_csv(os.path.join(x, "X_to_train.csv")), all_datasets)))
+    dataset_with_size = sorted(zip(all_datasets, dataset_sizes), key=lambda x:x[1])
+
+    for idx, (curr_dataset, _) in enumerate(dataset_with_size):
+        dataset_name = os.path.basename(curr_dataset)
+        print(f"{dataset_name} {idx} / {len(dataset_with_size)}")
+        test_name = f'Agent_{dataset_name}_pruning'
+        main(dataset_name=dataset_name, test_name=test_name)
