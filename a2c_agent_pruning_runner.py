@@ -141,7 +141,7 @@ def evaluate_model(mode, base_path, curr_prune_percentage):
 
     for i in range(len(env.all_networks)):
         state = env.reset()
-        print(i)
+        # print(i)
         origin_lh = env.create_learning_handler(env.loaded_model.model)
         origin_acc = origin_lh.evaluate_model()
 
@@ -205,8 +205,8 @@ if __name__ == "__main__":
     dataset_sizes = list(map(lambda x: x.shape[0], map(lambda x: pd.read_csv(os.path.join(x, "X_to_train.csv")), all_datasets)))
     dataset_with_size = sorted(zip(all_datasets, dataset_sizes), key=lambda x:x[1])
 
-    for idx, (curr_dataset, _) in enumerate(dataset_with_size):
+    for idx, (curr_dataset, _) in enumerate(dataset_with_size[12:]):
         dataset_name = os.path.basename(curr_dataset)
-        print(f"{dataset_name} {idx} / {len(dataset_with_size)}")
+        print(f"{dataset_name} {idx + 12} / {len(dataset_with_size)}")
         test_name = f'Agent_{dataset_name}_pruning'
         main(dataset_name=dataset_name, test_name=test_name)

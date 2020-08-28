@@ -135,7 +135,7 @@ def look_ahead_prune_model(env: NetworkEnv):
 
     optimizer = partial(optim.Adam, lr=0.0012)
     pruning_iteration_start = 1
-    pruning_iteration_end = 1
+    pruning_iteration_end = 10
     pretrain_iteration = 50000
     finetune_iteration = 50000
     batch_size = 60
@@ -156,7 +156,7 @@ def look_ahead_prune_model(env: NetworkEnv):
             network = deepcopy(original_network).cuda()
             prune_ratios = []
             for idx in range(len(original_prune_ratio)):
-                prune_ratios.append((1.0 - original_prune_ratio[idx]) ** it)
+                prune_ratios.append(1.0 - ((1.0 - original_prune_ratio[idx]) ** it))
         elif pruning_type == 'iterative':
             prune_ratios = []
             for idx in range(len(original_prune_ratio)):
@@ -212,7 +212,7 @@ def look_ahead_prune_model(env: NetworkEnv):
 
         accuracies.append((num_params, pruned_params, new_acc))
 
-    return accuracies[0]
+    return accuracies[-1]
 
 
 def calc_num_parameters(model):
@@ -297,6 +297,6 @@ if __name__ == "__main__":
     for idx, (curr_dataset, _) in enumerate(dataset_with_size):
         dataset_name = os.path.basename(curr_dataset)
         print(f"{dataset_name} {idx} / {len(dataset_with_size)}")
-        test_name = f'Agent_{dataset_name}_LAP_1'
+        test_name = f'Agent_{dataset_name}_LAP_10'
         main(dataset_name=dataset_name, test_name=test_name)
 
