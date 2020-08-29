@@ -205,7 +205,7 @@ if __name__ == "__main__":
     dataset_sizes = list(map(lambda x: x.shape[0], map(lambda x: pd.read_csv(os.path.join(x, "X_to_train.csv")), all_datasets)))
     dataset_with_size = sorted(zip(all_datasets, dataset_sizes), key=lambda x:x[1])
 
-    for idx, (curr_dataset, _) in enumerate(dataset_with_size[12:]):
+    for idx, (curr_dataset, _) in enumerate(dataset_with_size[16:]):
         dataset_name = os.path.basename(curr_dataset)
         print(f"{dataset_name} {idx + 12} / {len(dataset_with_size)}")
         test_name = f'Agent_{dataset_name}_pruning'
