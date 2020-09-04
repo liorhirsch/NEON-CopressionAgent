@@ -60,7 +60,9 @@ class A2C_Agent_Reinforce():
         reward_not_improving = False
         action_to_compression = StaticConf.getInstance().conf_values.action_to_compression_rate
 
-        while self.episode_idx < (len(self.env.all_networks) * 10) or (not reward_not_improving):
+        min_episode_num = len(self.env.all_networks) * 10
+
+        while self.episode_idx < min_episode_num or (not reward_not_improving):
             print("Episode {}/{}".format(self.episode_idx, self.num_episodes))
             state = self.env.reset()
             log_probs = []
@@ -195,8 +197,12 @@ class A2C_Agent_Reinforce():
 
 
 
-            if len(all_rewards_episodes) > 20 and max_reward_in_all_episodes >= max(all_rewards_episodes[-20:]):
+            if len(all_rewards_episodes) > min_episode_num and max_reward_in_all_episodes >= max(all_rewards_episodes[-min_episode_num:]):
                 reward_not_improving = True
+
+            if len(all_rewards_episodes) > 5 * min_episode_num:
+                reward_not_improving = True
+
 
 def v(a):
     return a.data.detach().cpu().numpy().min()
