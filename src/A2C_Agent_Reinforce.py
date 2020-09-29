@@ -1,3 +1,5 @@
+import time
+
 import torch
 import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
@@ -61,8 +63,11 @@ class A2C_Agent_Reinforce():
         action_to_compression = StaticConf.getInstance().conf_values.action_to_compression_rate
 
         min_episode_num = len(self.env.all_networks) * 10
+        start_time = time.time()
+        MAX_TIME_TO_RUN = 60 * 60 * 24 * 6
 
-        while self.episode_idx < min_episode_num or (not reward_not_improving):
+        while (self.episode_idx < min_episode_num or (not reward_not_improving)) and \
+              time.time() < start_time + MAX_TIME_TO_RUN:
             print("Episode {}/{}".format(self.episode_idx, self.num_episodes))
             state = self.env.reset()
             log_probs = []
@@ -94,71 +99,6 @@ class A2C_Agent_Reinforce():
 
                 if done:
                     break
-
-                # dist = self.actor_model(state)
-                # action = dist.sample()
-
-                # dist, value_cur_s = self.actor_critic_model(state)
-
-                # value_cur_s = self.critic_model(state)
-                # probs = dist._param.detach().numpy()[0]
-                # action = np.random.choice(len(self.action_to_compression), 1, p=probs)[0]
-                # action = dist.sample()
-                # compression_rate = self.action_to_compression[action.cpu().numpy()[0]]
-                # next_state, reward, done = self.env.step(compression_rate)
-
-                # if done:
-                #     value_next_s = 0
-                # else:
-                #     # _, value_next_s = self.actor_critic_model(next_state)
-                #     value_next_s = self.critic_model(next_state)
-
-                # target = reward + self.discount_factor * value_next_s
-                # rewards.append(reward)
-                # advantage = target - value_cur_s
-                # critic_loss = advantage.pow(2)
-                # loss_val = critic_loss.data.detach().cpu().numpy().min()
-                # writer.add_scalar('Critic Loss', loss_val, frame_idx)
-
-                # actor_loss = -dist.log_prob(torch.Tensor([action])) * advantage.detach()
-                # loss_val = actor_loss.data.detach().cpu().numpy().min()
-                # writer.add_scalar('Actor Loss', loss_val, frame_idx)
-
-                # self.critic_optimizer.zero_grad()
-                # critic_loss.backward()
-                # self.critic_optimizer.step()
-
-
-                # self.actor_optimizer.zero_grad()
-                # actor_loss.backward()
-                # self.actor_optimizer.step()
-
-                # loss = actor_loss + critic_loss
-                # loss_val = loss.data.detach().cpu().numpy().min()
-                # writer.add_scalar('Loss', loss_val, frame_idx)
-
-                # self.optimizer.zero_grad()
-                # loss.backward()
-                # self.optimizer.step()
-
-                # state = next_state
-                # frame_idx += 1
-                #
-                # if done:
-                #     break
-
-                # entropy += dist.entropy().mean()
-                #
-                # log_probs.append(log_prob)
-                # values.append(value_cur_s)
-                # rewards.append(torch.FloatTensor([reward]).unsqueeze(1).to(self.device))
-                # masks.append(torch.FloatTensor([1 - done]).unsqueeze(1).to(self.device))
-                #
-                # state = next_state
-                # frame_idx += 1
-                #
-                # if done:
-                #     break
 
             writer.add_scalar('Total Reward in Episode', sum(rewards), self.episode_idx)
             self.episode_idx += 1
