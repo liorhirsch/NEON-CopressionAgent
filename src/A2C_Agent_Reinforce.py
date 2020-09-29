@@ -140,8 +140,8 @@ class A2C_Agent_Reinforce():
             if len(all_rewards_episodes) > min_episode_num and max_reward_in_all_episodes >= max(all_rewards_episodes[-min_episode_num:]):
                 reward_not_improving = True
 
-            if len(all_rewards_episodes) > 3 * min_episode_num:
-                reward_not_improving = True
+            if len(all_rewards_episodes) > 5 * min_episode_num:
+                break
 
 
 def v(a):
