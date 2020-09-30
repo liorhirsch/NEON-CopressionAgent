@@ -177,7 +177,7 @@ def extract_args_from_cmd():
     parser = argparse.ArgumentParser(description='')
     # parser.add_argument('--test_name', type=str)
     parser.add_argument('--dataset_name', type=str)
-    parser.add_argument('--learn_new_layers_only', type=bool, const=True, default=False, nargs='?')
+    parser.add_argument('--learn_new_layers_only', type=bool, const=True, default=True, nargs='?')
     parser.add_argument('--split', type=bool, const=True, default=False, nargs='?')
     parser.add_argument('--allowed_reduction_acc', type=int, nargs='?')
     parser.add_argument('--can_do_more_then_one_loop', type=bool, const=True, default=False, nargs='?')

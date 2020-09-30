@@ -260,13 +260,24 @@ class NetworkEnv:
         new_model = nn.Sequential(*new_model_layers)
         return new_model
 
+
+    def deep_copy_model(self, model):
+        new_model_layers = []
+        model_with_rows = ModelWithRows(model)
+
+        for l in model_with_rows.all_layers:
+            new_model_layers.append(copy.deepcopy(l))
+
+        return nn.Sequential(*new_model_layers)
+
+
     def is_to_change_bn_layer(self, curr_layer, last_linear_layer):
         return type(curr_layer) is nn.BatchNorm1d and \
                last_linear_layer is not None and \
                curr_layer.num_features is not last_linear_layer.out_features
 
     def create_new_model_pruned(self, action):
-        model_copy = copy.deepcopy(self.current_model)  # get a new instance
+        model_copy = self.deep_copy_model(self.current_model)  # get a new instance
         # model_copy.load_state_dict(self.current_model.state_dict())  # copy weights and stuff
 
         model_with_rows = ModelWithRows(model_copy)
