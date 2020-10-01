@@ -277,12 +277,12 @@ class NetworkEnv:
                curr_layer.num_features is not last_linear_layer.out_features
 
     def create_new_model_pruned(self, action):
-        model_copy = self.deep_copy_model(self.current_model)  # get a new instance
+        # model_copy = self.deep_copy_model(self.current_model)  # get a new instance
         # model_copy.load_state_dict(self.current_model.state_dict())  # copy weights and stuff
 
-        model_with_rows = ModelWithRows(model_copy)
+        model_with_rows = ModelWithRows(self.current_model)
         layer_to_change = self.get_linear_layer(model_with_rows.all_rows[self.layer_index - 1])
 
         prune.ln_structured(layer_to_change, 'weight', 1 - action, n=1, dim=0)
-        return model_copy
+        return self.current_model
 
