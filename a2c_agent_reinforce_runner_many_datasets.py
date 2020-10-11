@@ -215,7 +215,9 @@ def extract_args_from_cmd():
 
 
 if __name__ == "__main__":
+    print("Starting scripttt")
     args = extract_args_from_cmd()
+    print(args)
     with_loops = '_with_loop' if args.can_do_more_then_one_loop else ""
     pruned = '_pruned' if args.prune else ""
     test_name = f'All_Datasets_Agent_learn_new_layers_only_{args.learn_new_layers_only}_acc_reduction_{args.allowed_reduction_acc}{with_loops}{pruned}'

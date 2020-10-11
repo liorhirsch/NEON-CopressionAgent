@@ -48,7 +48,7 @@ class ClassificationHandler(BasicHandler):
         best_loss = np.inf
         best_state_dict = None
         epochs_not_improved = 0
-        MAX_EPOCHS_PATIENCE = 10
+        MAX_EPOCHS_PATIENCE = 3
 
         self.optimizer.param_groups[0]['params'] = list(self.model.parameters())
 
