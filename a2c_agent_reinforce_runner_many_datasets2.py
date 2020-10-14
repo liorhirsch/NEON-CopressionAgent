@@ -216,14 +216,14 @@ def extract_args_from_cmd():
 
 
 print("Starting scripttt")
-args = extract_args_from_cmd()
-print(args)
-with_loops = '_with_loop' if args.can_do_more_then_one_loop else ""
-pruned = '_pruned' if args.prune else ""
-test_name = f'All_Datasets_Agent_learn_new_layers_only_{args.learn_new_layers_only}_acc_reduction_{args.allowed_reduction_acc}{with_loops}{pruned}'
-print(test_name)
-main(is_learn_new_layers_only=args.learn_new_layers_only, test_name=test_name,
-     is_to_split_cv=args.split,
-     total_allowed_accuracy_reduction=args.allowed_reduction_acc,
-     can_do_more_then_one_loop=args.can_do_more_then_one_loop,
-     prune=args.prune)
+# args = extract_args_from_cmd()
+# print(args)
+# with_loops = '_with_loop' if args.can_do_more_then_one_loop else ""
+# pruned = '_pruned' if args.prune else ""
+# test_name = f'All_Datasets_Agent_learn_new_layers_only_{args.learn_new_layers_only}_acc_reduction_{args.allowed_reduction_acc}{with_loops}{pruned}'
+# print(test_name)
+# main(is_learn_new_layers_only=args.learn_new_layers_only, test_name=test_name,
+#      is_to_split_cv=args.split,
+#      total_allowed_accuracy_reduction=args.allowed_reduction_acc,
+#      can_do_more_then_one_loop=args.can_do_more_then_one_loop,
+#      prune=args.prune)
