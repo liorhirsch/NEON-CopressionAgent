@@ -146,8 +146,8 @@ def main(is_learn_new_layers_only, test_name,
     base_path = f"./OneDatasetLearning/Classification/"
     datasets = list(map(os.path.basename, glob.glob(join(base_path, "*"))))
     train_datasets, test_datasets = train_test_split(datasets, test_size = 0.2, random_state=dataset_split_seed)
-    print("train datasets = ", train_datasets)
-    print("test datasets = ", test_datasets)
+    print("train datasets = ", train_datasets, flush=True)
+    print("test datasets = ", test_datasets, flush=True)
 
     actions = {
         0: 1,
@@ -174,11 +174,11 @@ def main(is_learn_new_layers_only, test_name,
     test_models_path = flatten(test_models_path)
 
     agent = A2C_Agent_Reinforce(train_models_path)
-    print("Starting training")
+    print("Starting training", flush=True)
     agent.train()
-    print("Done training")
+    print("Done training", flush=True)
 
-    print("Starting evaluate train datasets")
+    print("Starting evaluate train datasets", flush=True)
 
     for d in train_datasets:
         mode = 'test'
@@ -189,7 +189,7 @@ def main(is_learn_new_layers_only, test_name,
         results = evaluate_model(mode, join(base_path, d), agent)
         results.to_csv(f"./models/Reinforce_One_Dataset/results_{d}_{test_name}_{mode}_trained_dataset.csv")
 
-    print("Starting evaluate test datasets")
+    print("Starting evaluate test datasets", flush=True)
     for d in test_datasets:
         mode = 'test'
         results = evaluate_model(mode, join(base_path, d), agent)
@@ -215,15 +215,15 @@ def extract_args_from_cmd():
     return args
 
 
-print("Starting scripttt")
+print("Starting scripttt", flush=True)
 args = extract_args_from_cmd()
-print(args)
+print(args, flush=True)
 with_loops = '_with_loop' if args.can_do_more_then_one_loop else ""
 pruned = '_pruned' if args.prune else ""
 test_name = f'All_Datasets_Agent_learn_new_layers_only_{args.learn_new_layers_only}_acc_reduction_{args.allowed_reduction_acc}{with_loops}{pruned}'
-print(test_name)
-# main(is_learn_new_layers_only=args.learn_new_layers_only, test_name=test_name,
-#      is_to_split_cv=args.split,
-#      total_allowed_accuracy_reduction=args.allowed_reduction_acc,
-#      can_do_more_then_one_loop=args.can_do_more_then_one_loop,
-#      prune=args.prune)
+print(test_name, flush=True)
+main(is_learn_new_layers_only=args.learn_new_layers_only, test_name=test_name,
+     is_to_split_cv=args.split,
+     total_allowed_accuracy_reduction=args.allowed_reduction_acc,
+     can_do_more_then_one_loop=args.can_do_more_then_one_loop,
+     prune=args.prune)
