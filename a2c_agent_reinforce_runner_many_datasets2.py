@@ -46,9 +46,14 @@ def load_models_path(main_path, mode='train'):
 
 def init_conf_values(action_to_compression_rate, num_epoch=100, is_learn_new_layers_only=False,
                      total_allowed_accuracy_reduction=1, can_do_more_then_one_loop=False, prune=False):
+
+    if not torch.cuda.is_available():
+        sys.exit("GPU was not allocated!!!!")
+
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    print_flush(f"torch.cuda.is_available() = {torch.cuda.is_available()}")
     print_flush(f"device is {device}")
+    print_flush(f"device name is {torch.cuda.get_device_name(0)}")
+
     num_actions = len(action_to_compression_rate)
     cv = ConfigurationValues(device, action_to_compression_rate=action_to_compression_rate, num_actions=num_actions,
                              num_epoch=num_epoch,
