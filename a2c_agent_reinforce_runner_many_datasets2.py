@@ -19,7 +19,7 @@ from src.Configuration.ConfigurationValues import ConfigurationValues
 from src.Configuration.StaticConf import StaticConf
 from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX
 from src.NetworkEnv import NetworkEnv
-
+from src.utils import print_flush
 
 
 def load_models_path(main_path, mode='train'):
@@ -47,6 +47,7 @@ def load_models_path(main_path, mode='train'):
 def init_conf_values(action_to_compression_rate, num_epoch=100, is_learn_new_layers_only=False,
                      total_allowed_accuracy_reduction=1, can_do_more_then_one_loop=False, prune=False):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    print_flush(f"device is {device}")
     num_actions = len(action_to_compression_rate)
     cv = ConfigurationValues(device, action_to_compression_rate=action_to_compression_rate, num_actions=num_actions,
                              num_epoch=num_epoch,
@@ -102,7 +103,7 @@ def evaluate_model(mode, base_path, agent):
                                  'origin_param', 'new_model_arch', 'origin_model_arch'])
 
     for i in range(len(env.all_networks)):
-        print(i)
+        print_flush(f"network index {i}")
         state = env.reset()
         done = False
 
@@ -146,8 +147,8 @@ def main(is_learn_new_layers_only, test_name,
     base_path = f"./OneDatasetLearning/Classification/"
     datasets = list(map(os.path.basename, glob.glob(join(base_path, "*"))))
     train_datasets, test_datasets = train_test_split(datasets, test_size = 0.2, random_state=dataset_split_seed)
-    print("train datasets = ", train_datasets, flush=True)
-    print("test datasets = ", test_datasets, flush=True)
+    print_flush(f"train datasets =  {train_datasets}")
+    print_flush(f"test datasets = {test_datasets}")
 
     actions = {
         0: 1,
@@ -174,11 +175,11 @@ def main(is_learn_new_layers_only, test_name,
     test_models_path = flatten(test_models_path)
 
     agent = A2C_Agent_Reinforce(train_models_path)
-    print("Starting training", flush=True)
+    print_flush("Starting training")
     agent.train()
-    print("Done training", flush=True)
+    print_flush("Done training")
 
-    print("Starting evaluate train datasets", flush=True)
+    print_flush("Starting evaluate train datasets")
 
     for d in train_datasets:
         mode = 'test'
@@ -189,7 +190,7 @@ def main(is_learn_new_layers_only, test_name,
         results = evaluate_model(mode, join(base_path, d), agent)
         results.to_csv(f"./models/Reinforce_One_Dataset/results_{d}_{test_name}_{mode}_trained_dataset.csv")
 
-    print("Starting evaluate test datasets", flush=True)
+    print_flush("Starting evaluate test datasets")
     for d in test_datasets:
         mode = 'test'
         results = evaluate_model(mode, join(base_path, d), agent)
@@ -215,13 +216,13 @@ def extract_args_from_cmd():
     return args
 
 
-print("Starting scripttt", flush=True)
+print_flush("Starting scripttt")
 args = extract_args_from_cmd()
-print(args, flush=True)
+print_flush(args)
 with_loops = '_with_loop' if args.can_do_more_then_one_loop else ""
 pruned = '_pruned' if args.prune else ""
 test_name = f'All_Datasets_Agent_learn_new_layers_only_{args.learn_new_layers_only}_acc_reduction_{args.allowed_reduction_acc}{with_loops}{pruned}'
-print(test_name, flush=True)
+print_flush(test_name)
 main(is_learn_new_layers_only=args.learn_new_layers_only, test_name=test_name,
      is_to_split_cv=args.split,
      total_allowed_accuracy_reduction=args.allowed_reduction_acc,

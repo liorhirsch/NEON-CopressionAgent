@@ -22,6 +22,7 @@ from src.Model.Actor import Actor
 from src.Model.ActorCritic import ActorCritic
 from src.NetworkEnv import NetworkEnv
 from src.PrioritizedReplay import PrioritizedReplayMemory
+from src.utils import print_flush
 
 
 class A2C_Agent_Reinforce():
@@ -68,7 +69,7 @@ class A2C_Agent_Reinforce():
 
         while (self.episode_idx < min_episode_num or (not reward_not_improving)) and \
               time.time() < start_time + MAX_TIME_TO_RUN:
-            print("Episode {}/{}".format(self.episode_idx, self.num_episodes), flush=True)
+            print_flush("Episode {}/{}".format(self.episode_idx, self.num_episodes))
             state = self.env.reset()
             log_probs = []
             values = []
