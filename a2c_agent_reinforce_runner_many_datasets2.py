@@ -152,11 +152,13 @@ def main(fold, is_learn_new_layers_only, test_name,
          prune = False, dataset_split_seed = 0):
     base_path = f"./OneDatasetLearning/Classification/"
     datasets = list(map(os.path.basename, glob.glob(join(base_path, "*"))))
-    num_of_folds = 5
+    num_of_folds = 6
+
+    flatten = lambda l: [item for sublist in l for item in sublist]
 
     all_datasets_splitted = [datasets[i:i + num_of_folds] for i in range(0, len(datasets), num_of_folds)]
     test_datasets = all_datasets_splitted[fold]
-    train_datasets = [*all_datasets_splitted[:fold]] + [*all_datasets_splitted[fold + 1:]]
+    train_datasets = flatten([*all_datasets_splitted[:fold], *all_datasets_splitted[fold + 1:]])
 
     # train_datasets, test_datasets = train_test_split(datasets, test_size = 0.2, random_state=dataset_split_seed)
     print_flush(f"train datasets =  {train_datasets}")
@@ -223,7 +225,7 @@ def extract_args_from_cmd():
     parser.add_argument('--allowed_reduction_acc', type=int, nargs='?')
     parser.add_argument('--can_do_more_then_one_loop', type=bool, const=True, default=False, nargs='?')
     parser.add_argument('--prune', type=bool, const=True, default=False, nargs='?')
-    parser.add_argument('--fold', type=bool, const=True, default=False, nargs='?')
+    parser.add_argument('--fold', type=int, nargs='?')
 
     args = parser.parse_args()
     return args
