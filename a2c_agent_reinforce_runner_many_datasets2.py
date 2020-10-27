@@ -188,7 +188,7 @@ def main(fold, is_learn_new_layers_only, test_name,
     train_models_path = flatten(train_models_path)
     test_models_path = flatten(test_models_path)
 
-    agent = A2C_Agent_Reinforce(train_models_path)
+    agent = A2C_Agent_Reinforce(train_models_path, test_name)
     print_flush("Starting training")
     agent.train()
     print_flush("Done training")

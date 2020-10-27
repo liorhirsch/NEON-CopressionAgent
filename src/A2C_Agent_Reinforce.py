@@ -27,8 +27,9 @@ from src.utils import print_flush
 
 class A2C_Agent_Reinforce():
     # , experience_replay_size, priority_alpha, priority_beta_start, priority_beta_frames
-    def __init__(self, models_path):
+    def __init__(self, models_path, test_name):
         # Hyper params:
+        self.test_name = test_name
         self.discount_factor = 0.9
         self.lr = 1e-3
         self.num_steps = 10
@@ -55,7 +56,7 @@ class A2C_Agent_Reinforce():
         return returns
 
     def train(self):
-        writer = SummaryWriter()
+        writer = SummaryWriter(f"runs/{self.test_name}")
         frame_idx = 0
 
         all_rewards_episodes = []
