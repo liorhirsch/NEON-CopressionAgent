@@ -19,29 +19,7 @@ from src.Configuration.ConfigurationValues import ConfigurationValues
 from src.Configuration.StaticConf import StaticConf
 from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX
 from src.NetworkEnv import NetworkEnv
-from src.utils import print_flush
-
-
-def load_models_path(main_path, mode='train'):
-    model_paths = []
-
-    for root, dirs, files in os.walk(main_path):
-        if ('X_train.csv' not in files):
-            continue
-        train_data_path = join(root, 'X_train.csv')
-
-        if mode == 'train':
-            model_names = pd.read_csv(join(root, 'train_models.csv'))['0'].to_numpy()
-        elif mode == 'test':
-            model_names = pd.read_csv(join(root, 'test_models.csv'))['0'].to_numpy()
-        else:
-            model_names = files
-
-        model_files = list(map(lambda file: os.path.join(root, file),
-                               filter(lambda file_name: file_name.endswith('.pt') and file_name in model_names, files)))
-        model_paths.append((train_data_path, model_files))
-
-    return model_paths
+from src.utils import print_flush, load_models_path, get_model_layers
 
 
 def init_conf_values(action_to_compression_rate, num_epoch=100, is_learn_new_layers_only=False,
@@ -67,32 +45,6 @@ def init_conf_values(action_to_compression_rate, num_epoch=100, is_learn_new_lay
 
 torch.manual_seed(0)
 np.random.seed(0)
-
-
-def split_dataset_to_train_test(path):
-    models_path = load_models_path(path, 'all')
-    all_models = models_path[0][1]
-    all_models = list(map(os.path.basename, all_models))
-    train_models, test_models = train_test_split(all_models, test_size=0.2)
-
-    df_train = DataFrame(data=train_models)
-    df_train.to_csv(join(path, "train_models.csv"))
-
-    df_test = DataFrame(data=test_models)
-    df_test.to_csv(join(path, "test_models.csv"))
-
-
-def get_linear_layer(row):
-    for l in row:
-        if type(l) is nn.Linear:
-            return l
-
-
-def get_model_layers(model):
-    new_model_with_rows = ModelWithRows(model)
-    linear_layers = [(get_linear_layer(x).in_features, get_linear_layer(x).out_features) for x in
-                     new_model_with_rows.all_rows]
-    return str(linear_layers)
 
 
 def evaluate_model(mode, base_path, agent):
