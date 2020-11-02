@@ -44,7 +44,13 @@ def load_models_path(main_path, mode='train'):
 
 def init_conf_values(action_to_compression_rate, num_epoch=100, is_learn_new_layers_only=False,
                      total_allowed_accuracy_reduction=1, can_do_more_then_one_loop=False):
+    if not torch.cuda.is_available():
+        sys.exit("GPU was not allocated!!!!")
+
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    print_flush(f"device is {device}")
+    print_flush(f"device name is {torch.cuda.get_device_name(0)}")
+
     num_actions = len(action_to_compression_rate)
     MAX_TIME_TO_RUN = 60 * 60 * 24 * 2.5
     cv = ConfigurationValues(device, action_to_compression_rate=action_to_compression_rate, num_actions=num_actions,
@@ -158,17 +164,24 @@ def main(dataset_name, is_learn_new_layers_only, test_name,
                      can_do_more_then_one_loop=can_do_more_then_one_loop)
     models_path = load_models_path(base_path, 'train')
 
-    agent = A2C_Agent_Reinforce(models_path)
+    agent = A2C_Agent_Reinforce(models_path, test_name)
+    print_flush("Starting training")
     agent.train()
+    print_flush("Done training")
 
+    print_flush("Starting evaluate train datasets")
 
     mode = 'test'
     results = evaluate_model(mode, base_path, agent)
     results.to_csv(f"./models/Reinforce_One_Dataset/results_{test_name}_{mode}.csv")
 
+    print_flush("DONE evaluate train datasets")
+
+    print_flush("Starting evaluate test datasets")
     mode = 'train'
     results = evaluate_model(mode, base_path, agent)
     results.to_csv(f"./models/Reinforce_One_Dataset/results_{test_name}_{mode}.csv")
+    print_flush("DONE evaluate test datasets")
 
 def extract_args_from_cmd():
     parser = argparse.ArgumentParser(description='')
