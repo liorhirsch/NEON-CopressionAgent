@@ -66,7 +66,8 @@ class A2C_Agent_Reinforce():
 
         min_episode_num = len(self.env.all_networks) * 10
         start_time = time.time()
-        MAX_TIME_TO_RUN = 60 * 60 * 24 * 4
+
+        MAX_TIME_TO_RUN = StaticConf.getInstance().conf_values.MAX_TIME_TO_RUN
 
         while (self.episode_idx < min_episode_num or (not reward_not_improving)) and \
               time.time() < start_time + MAX_TIME_TO_RUN:

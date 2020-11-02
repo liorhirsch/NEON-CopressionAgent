@@ -30,15 +30,16 @@ class Dataset(torch.utils.data.Dataset):
 
 
 class ClassificationHandler(BasicHandler):
-    def evaluate_model(self) -> float:
+    def evaluate_model(self, validation=False) -> float:
+        cv_obj = self.cross_validation_obj
+        x_cv, y_cv = (cv_obj.x_val, cv_obj.y_val) if validation else (cv_obj.x_test, cv_obj.y_test)
+
         device = StaticConf.getInstance().conf_values.device
-        validation_output = torch.argmax(
-            self.model(torch.Tensor(self.cross_validation_obj.x_test).to(device).float()).detach().cpu(), 1)
-        return accuracy_score(validation_output, self.cross_validation_obj.y_test)
+        preds = self.model(torch.Tensor(x_cv).to(device).float()).detach().cpu()
+        preds_classes = torch.argmax(preds, dim=1)
+        return accuracy_score(preds_classes, y_cv)
 
     def train_model(self):
-        # TODO - move all changes made here to RegressionHandler
-
         dataSet = Dataset(self.cross_validation_obj.x_train, self.cross_validation_obj.y_train)
         trainLoader = torch.utils.data.DataLoader(dataSet, batch_size=32, shuffle=True)
         device = StaticConf.getInstance().conf_values.device

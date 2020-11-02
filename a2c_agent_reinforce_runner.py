@@ -17,6 +17,7 @@ from src.Configuration.ConfigurationValues import ConfigurationValues
 from src.Configuration.StaticConf import StaticConf
 from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX
 from src.NetworkEnv import NetworkEnv
+from src.utils import print_flush
 
 
 def load_models_path(main_path, mode='train'):
@@ -45,11 +46,13 @@ def init_conf_values(action_to_compression_rate, num_epoch=100, is_learn_new_lay
                      total_allowed_accuracy_reduction=1, can_do_more_then_one_loop=False):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     num_actions = len(action_to_compression_rate)
+    MAX_TIME_TO_RUN = 60 * 60 * 24 * 2.5
     cv = ConfigurationValues(device, action_to_compression_rate=action_to_compression_rate, num_actions=num_actions,
                              num_epoch=num_epoch,
                              is_learn_new_layers_only=is_learn_new_layers_only,
                              total_allowed_accuracy_reduction=total_allowed_accuracy_reduction,
-                             can_do_more_then_one_loop=can_do_more_then_one_loop)
+                             can_do_more_then_one_loop=can_do_more_then_one_loop,
+                             MAX_TIME_TO_RUN = MAX_TIME_TO_RUN)
     StaticConf(cv)
 
 
@@ -98,7 +101,7 @@ def evaluate_model(mode, base_path, agent):
                                  'origin_param', 'new_model_arch', 'origin_model_arch'])
 
     for i in range(len(env.all_networks)):
-        print(i)
+        print_flush(i)
         state = env.reset()
         done = False
 
@@ -166,12 +169,6 @@ def main(dataset_name, is_learn_new_layers_only, test_name,
     mode = 'train'
     results = evaluate_model(mode, base_path, agent)
     results.to_csv(f"./models/Reinforce_One_Dataset/results_{test_name}_{mode}.csv")
-
-
-
-
-
-
 
 def extract_args_from_cmd():
     parser = argparse.ArgumentParser(description='')

@@ -48,8 +48,9 @@ class NetworkEnv:
         }
 
     def create_train_test_splits(self):
-        self.cross_validation_obj = CrossValidationObject(self.X_train_data.values, self.X_val_data.values,
-                                                          self.Y_train_data.values, self.Y_val_data.values)
+        X_train, X_val, Y_train, Y_val = train_test_split(self.X_train_data.values, self.Y_train_data.values, test_size = 0.2, random_state=1)
+        self.cross_validation_obj = CrossValidationObject(X_train, X_val, self.X_test_data.values,
+                                                          Y_train, Y_val, self.Y_test_data.values)
             # *train_test_split(self.X_train_data.values, self.Y_train_data.values, test_size=0.2, random_state=0))
 
     def reset(self):
@@ -74,14 +75,14 @@ class NetworkEnv:
         curr_group_index = self.net_order[self.curr_net_index]
         x_train_path, selected_net_path = self.all_networks[curr_group_index]
 
-        x_val_path = str.replace(x_train_path, 'X_train', 'X_val')
+        x_test_path = str.replace(x_train_path, 'X_train', 'X_val')
         y_train_path = str.replace(x_train_path, 'X_train', 'Y_train')
-        y_val_path = str.replace(x_train_path, 'X_train', 'Y_val')
+        y_test_path = str.replace(x_train_path, 'X_train', 'Y_val')
 
 
         device = StaticConf.getInstance().conf_values.device
         self.loaded_model, self.X_train_data, self.Y_train_data = load_model_and_data(selected_net_path, x_train_path, y_train_path, device)
-        self.X_val_data, self.Y_val_data = pd.read_csv(x_val_path), pd.read_csv(y_val_path)
+        self.X_test_data, self.Y_test_data = pd.read_csv(x_test_path), pd.read_csv(y_test_path)
 
         self.current_model = self.loaded_model.model
         self.feature_extractor = FeatureExtractor(self.loaded_model.model, self.X_train_data._values, device)
@@ -89,7 +90,7 @@ class NetworkEnv:
         self.create_train_test_splits()
 
         learning_handler_original_model = self.create_learning_handler(self.current_model)
-        self.original_acc = learning_handler_original_model.evaluate_model()
+        self.original_acc = learning_handler_original_model.evaluate_model(validation=True)
 
         return fm
 
@@ -125,7 +126,7 @@ class NetworkEnv:
 
         # learning_handler_prev_model = self.create_learning_handler(self.current_model)
         # prev_acc = learning_handler_prev_model.evaluate_model()pn
-        new_acc = learning_handler_new_model.evaluate_model()
+        new_acc = learning_handler_new_model.evaluate_model(validation=True)
 
         # compute reward
         reward = self.compute_reward3(self.current_model, learning_handler_new_model.model, new_acc, self.original_acc,

@@ -13,7 +13,7 @@ class BasicHandler():
         self.loss_func = loss_function
         self.optimizer = optimizer
 
-    def evaluate_model(self) -> float:
+    def evaluate_model(self, validation=False) -> float:
         pass
 
     def train_model(self):
