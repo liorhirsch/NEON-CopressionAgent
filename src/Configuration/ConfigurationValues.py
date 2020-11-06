@@ -11,7 +11,7 @@ class ConfigurationValues():
     can_do_more_then_one_loop: bool
     prune: bool
 
-    def __init__(self, device, MAX_TIME_TO_RUN, action_to_compression_rate, num_epoch=100, num_actions=4, is_learn_new_layers_only=False,
+    def __init__(self, device, action_to_compression_rate, MAX_TIME_TO_RUN = 60 * 60 * 24 * 2, num_epoch=100, num_actions=4, is_learn_new_layers_only=False,
                  total_allowed_accuracy_reduction=1, can_do_more_then_one_loop=False, prune=False) -> None:
         self.action_to_compression_rate = action_to_compression_rate
         self.device = device

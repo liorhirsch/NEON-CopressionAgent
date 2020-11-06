@@ -55,8 +55,38 @@ def get_linear_layer(row):
             return l
 
 
-def get_model_layers(model):
+def get_model_layers_str(model):
     new_model_with_rows = ModelWithRows(model)
     linear_layers = [(get_linear_layer(x).in_features, get_linear_layer(x).out_features) for x in
                      new_model_with_rows.all_rows]
     return str(linear_layers)
+
+
+def get_model_layers(model):
+    new_model_with_rows = ModelWithRows(model)
+    return [get_linear_layer(x) for x in new_model_with_rows.all_rows]
+
+
+def dict2obj(d):
+    # checking whether object d is a
+    # instance of class list
+    if isinstance(d, list):
+        d = [dict2obj(x) for x in d]
+
+        # if d is not a instance of dict then
+    # directly object is returned
+    if not isinstance(d, dict):
+        return d
+
+        # declaring a class
+
+    class C:
+        pass
+
+    # constructor of the class passed to obj
+    obj = C()
+
+    for k in d:
+        obj.__dict__[k] = dict2obj(d[k])
+
+    return obj

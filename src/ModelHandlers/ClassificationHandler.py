@@ -49,7 +49,7 @@ class ClassificationHandler(BasicHandler):
         best_loss = np.inf
         best_state_dict = None
         epochs_not_improved = 0
-        MAX_EPOCHS_PATIENCE = 3
+        MAX_EPOCHS_PATIENCE = 10
 
         self.optimizer.param_groups[0]['params'] = list(self.model.parameters())
 
@@ -61,6 +61,7 @@ class ClassificationHandler(BasicHandler):
 
                 if len(curr_x) > 1:
                     self.optimizer.zero_grad()
+                    curr_x.requires_grad = True
                     outputs = self.model(curr_x.float().to(device))
                     curr_y = torch.max(curr_y, 1)[1]
                     loss = self.loss_func(outputs, curr_y.to(device))

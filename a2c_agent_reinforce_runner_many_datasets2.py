@@ -19,7 +19,7 @@ from src.Configuration.ConfigurationValues import ConfigurationValues
 from src.Configuration.StaticConf import StaticConf
 from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX
 from src.NetworkEnv import NetworkEnv
-from src.utils import print_flush, load_models_path, get_model_layers
+from src.utils import print_flush, load_models_path, get_model_layers_str
 
 
 def init_conf_values(action_to_compression_rate, num_epoch=100, is_learn_new_layers_only=False,
@@ -94,8 +94,8 @@ def evaluate_model(mode, base_path, agent):
                                   'origin_acc': origin_acc,
                                   'new_param': new_params,
                                   'origin_param': origin_params,
-                                  'new_model_arch': get_model_layers(env.current_model),
-                                  'origin_model_arch': get_model_layers(env.loaded_model.model)}, ignore_index=True)
+                                  'new_model_arch': get_model_layers_str(env.current_model),
+                                  'origin_model_arch': get_model_layers_str(env.loaded_model.model)}, ignore_index=True)
 
     return results
 

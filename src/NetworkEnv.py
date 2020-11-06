@@ -17,6 +17,8 @@ from src.ModelHandlers.ClassificationHandler import ClassificationHandler
 from src.ModelHandlers.RegressionHandler import RegressionHandler
 import pandas as pd
 
+from src.utils import print_flush
+
 flatten_list = lambda l: [item for sublist in l for item in sublist]
 
 
@@ -74,6 +76,7 @@ class NetworkEnv:
         self.curr_net_index = self.curr_net_index % len(self.net_order)
         curr_group_index = self.net_order[self.curr_net_index]
         x_train_path, selected_net_path = self.all_networks[curr_group_index]
+        print_flush(selected_net_path)
 
         x_test_path = str.replace(x_train_path, 'X_train', 'X_val')
         y_train_path = str.replace(x_train_path, 'X_train', 'Y_train')
