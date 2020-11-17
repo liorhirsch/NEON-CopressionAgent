@@ -182,7 +182,7 @@ if __name__ == "__main__":
     dataset_sizes = list(map(lambda x: x.shape[0], map(lambda x: pd.read_csv(os.path.join(x, "X_to_train.csv")), all_datasets)))
     dataset_with_size = sorted(zip(all_datasets, dataset_sizes), key=lambda x:x[1])
 
-    for curr_dataset, _ in dataset_with_size[10:]:
+    for curr_dataset, _ in dataset_with_size:
         args.dataset_name = os.path.basename(curr_dataset)
         print(args.dataset_name)
         with_loops = '_with_loop' if args.can_do_more_then_one_loop else ""
