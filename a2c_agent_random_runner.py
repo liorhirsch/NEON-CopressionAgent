@@ -180,10 +180,10 @@ if __name__ == "__main__":
 
     all_datasets = glob.glob("./OneDatasetLearning/Classification/*")
 
-    dataset_sizes = list(map(lambda x: x.shape[0], map(lambda x: pd.read_csv(os.path.join(x, "X_to_train.csv")), all_datasets)))
-    dataset_with_size = sorted(zip(all_datasets, dataset_sizes), key=lambda x:x[1])
+    # dataset_sizes = list(map(lambda x: x.shape[0], map(lambda x: pd.read_csv(os.path.join(x, "X_to_train.csv")), all_datasets)))
+    # dataset_with_size = sorted(zip(all_datasets, dataset_sizes), key=lambda x:x[1])
 
-    for curr_dataset, _ in dataset_with_size:
+    for curr_dataset, _ in all_datasets:
         args.dataset_name = os.path.basename(curr_dataset)
         (curr_dataset)(args.dataset_name)
         with_loops = '_with_loop' if args.can_do_more_then_one_loop else ""
