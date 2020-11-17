@@ -28,27 +28,7 @@ from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX
 from src.NetworkEnv import NetworkEnv
 import torch.nn.utils.prune as prune
 
-
-def load_models_path(main_path, mode='train'):
-    model_paths = []
-
-    for root, dirs, files in os.walk(main_path):
-        if ('X_to_train.csv' not in files):
-            continue
-        train_data_path = root + '/X_to_train.csv'
-
-        if mode == 'train':
-            model_names = pd.read_csv(root + '/train_models.csv')['0'].to_numpy()
-        elif mode == 'test':
-            model_names = pd.read_csv(root + '/test_models.csv')['0'].to_numpy()
-        else:
-            model_names = files
-
-        model_files = list(map(lambda file: os.path.join(root, file),
-                               filter(lambda file_name: file_name.endswith('.pt') and file_name in model_names, files)))
-        model_paths.append((train_data_path, model_files))
-
-    return model_paths
+from src.utils import load_models_path, print_flush
 
 
 def init_conf_values(action_to_compression_rate, num_epoch=100, is_learn_new_layers_only=False,
@@ -65,20 +45,6 @@ def init_conf_values(action_to_compression_rate, num_epoch=100, is_learn_new_lay
 
 torch.manual_seed(0)
 np.random.seed(0)
-
-
-def split_dataset_to_train_test(path):
-    models_path = load_models_path(path, 'all')
-    all_models = models_path[0][1]
-    all_models = list(map(os.path.basename, all_models))
-    train_models, test_models = train_test_split(all_models, test_size=0.2)
-
-    df_train = DataFrame(data=train_models)
-    df_train.to_csv(path + "train_models.csv")
-
-    df_test = DataFrame(data=test_models)
-    df_test.to_csv(path + "test_models.csv")
-
 
 def get_linear_layer(row):
     for l in row:
@@ -124,7 +90,7 @@ def get_masks(self):
     return masks
 
 
-def look_ahead_prune_model(env: NetworkEnv):
+def look_ahead_prune_model(env: NetworkEnv, iterations):
     accuracies = []
     network = MaskedPreTrainedMLP(env.current_model)
     amount_of_linear_layers = len(list(filter(lambda x: type(x) is MaskedLinearPreTrained, network.modules()))) - 1
@@ -135,7 +101,7 @@ def look_ahead_prune_model(env: NetworkEnv):
 
     optimizer = partial(optim.Adam, lr=0.0012)
     pruning_iteration_start = 1
-    pruning_iteration_end = 10
+    pruning_iteration_end = iterations
     pretrain_iteration = 50000
     finetune_iteration = 50000
     batch_size = 60
@@ -144,10 +110,6 @@ def look_ahead_prune_model(env: NetworkEnv):
     original_network = network  # keep the original network
     original_prune_ratio = prune_ratios  # keep the original prune ratio
     pruning_method = get_method('lap')  # lap = look-ahead-pruning
-    # network.set_weights = set_weights
-    # network.set_masks = set_masks
-    # network.get_weights = get_weights
-    # network.get_masks = get_masks
 
     for it in range(pruning_iteration_start, pruning_iteration_end + 1):
         # get pruning ratio for current iteration
@@ -219,16 +181,9 @@ def calc_num_parameters(model):
     return sum(p.numel() for p in model.parameters())
 
 
-def evaluate_model(mode, base_path):
+def evaluate_model(mode, base_path, iterations):
     models_path = load_models_path(base_path, mode)
     env = NetworkEnv(models_path, StaticConf.getInstance().conf_values.can_do_more_then_one_loop)
-    action_to_compression = {
-        0: 1,
-        1: 0.9,
-        2: 0.8,
-        3: 0.7,
-        4: 0.6
-    }
 
     results = DataFrame(columns=['model', 'new_acc', 'origin_acc', 'new_param',
                                  'origin_param', 'new_model_arch', 'origin_model_arch'])
@@ -238,7 +193,7 @@ def evaluate_model(mode, base_path):
         origin_lh = env.create_learning_handler(env.loaded_model.model)
         origin_acc = origin_lh.evaluate_model()
 
-        num_params, pruned_params, new_acc = look_ahead_prune_model(env)
+        num_params, pruned_params, new_acc = look_ahead_prune_model(env, iterations)
 
         model_name = env.all_networks[env.net_order[env.curr_net_index - 1]][1]
 
@@ -253,7 +208,7 @@ def evaluate_model(mode, base_path):
     return results
 
 
-def main(dataset_name, test_name):
+def main(dataset_name, test_name, iterations):
     actions = {
         0: 1,
         1: 0.9,
@@ -266,11 +221,11 @@ def main(dataset_name, test_name):
     init_conf_values(actions, num_epoch=10)
     # prune_percentages = [.01, .05, .1, .25, .50, .60, .70, .80, .90]
     mode = 'test'
-    results = evaluate_model(mode, base_path)
+    results = evaluate_model(mode, base_path, iterations)
     results.to_csv(f"./models/Reinforce_One_Dataset/results_{test_name}_{mode}.csv")
 
     mode = 'train'
-    results = evaluate_model(mode, base_path)
+    results = evaluate_model(mode, base_path, iterations)
     results.to_csv(f"./models/Reinforce_One_Dataset/results_{test_name}_{mode}.csv")
 
 
@@ -281,22 +236,19 @@ def extract_args_from_cmd():
     # parser.add_argument('--learn_new_layers_only', type=bool, const=True, default=False, nargs='?')
     # parser.add_argument('--split', type=bool, const=True, default=False, nargs='?')
     # parser.add_argument('--can_do_more_then_one_loop', type=bool, const=True, default=False, nargs='?')
+    parser.add_argument('--iterations', type=int)
 
     args = parser.parse_args()
     return args
 
 
 if __name__ == "__main__":
-    # args = extract_args_from_cmd()
+    args = extract_args_from_cmd()
 
     all_datasets = glob.glob("./OneDatasetLearning/Classification/*")
-
-    dataset_sizes = list(map(lambda x: x.shape[0], map(lambda x: pd.read_csv(os.path.join(x, "X_to_train.csv")), all_datasets)))
-    dataset_with_size = sorted(zip(all_datasets, dataset_sizes), key=lambda x:x[1])
-
-    for idx, (curr_dataset, _) in enumerate(dataset_with_size):
+    for idx, curr_dataset in enumerate(all_datasets):
         dataset_name = os.path.basename(curr_dataset)
-        print(f"{dataset_name} {idx} / {len(dataset_with_size)}")
-        test_name = f'Agent_{dataset_name}_LAP_10'
-        main(dataset_name=dataset_name, test_name=test_name)
+        print_flush(f"{dataset_name} {idx} / {len(all_datasets)}")
+        test_name = f'Agent_{dataset_name}_LAP_{args.iterations}'
+        main(dataset_name=dataset_name, test_name=test_name, iterations=args.iterations)
 
