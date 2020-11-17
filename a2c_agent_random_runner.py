@@ -18,6 +18,7 @@ from src.Configuration.ConfigurationValues import ConfigurationValues
 from src.Configuration.StaticConf import StaticConf
 from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX
 from src.NetworkEnv import NetworkEnv
+from src.utils import print_flush
 
 
 def load_models_path(main_path, mode='train'):
@@ -165,7 +166,7 @@ def main(dataset_name, is_learn_new_layers_only, test_name,
 def extract_args_from_cmd():
     parser = argparse.ArgumentParser(description='')
     # parser.add_argument('--test_name', type=str)
-    parser.add_argument('--dataset_name', type=str)
+    # parser.add_argument('--dataset_name', type=str)
     parser.add_argument('--learn_new_layers_only', type=bool, const=True, default=False, nargs='?')
     parser.add_argument('--split', type=bool, const=True, default=False, nargs='?')
     parser.add_argument('--can_do_more_then_one_loop', type=bool, const=True, default=False, nargs='?')
@@ -184,7 +185,7 @@ if __name__ == "__main__":
 
     for curr_dataset, _ in dataset_with_size:
         args.dataset_name = os.path.basename(curr_dataset)
-        print(args.dataset_name)
+        (curr_dataset)(args.dataset_name)
         with_loops = '_with_loop' if args.can_do_more_then_one_loop else ""
         test_name = f'Agent_{args.dataset_name}_learn_new_layers_only_{args.learn_new_layers_only}_{with_loops}_Random_Actions'
         main(dataset_name=args.dataset_name, is_learn_new_layers_only=args.learn_new_layers_only,test_name=test_name,
