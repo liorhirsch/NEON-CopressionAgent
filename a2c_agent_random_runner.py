@@ -132,10 +132,6 @@ def main(dataset_name, is_learn_new_layers_only, test_name,
     }
 
     base_path = f"./OneDatasetLearning/Classification/{dataset_name}/"
-
-    if is_to_split_cv:
-        split_dataset_to_train_test(base_path)
-
     init_conf_values(actions, is_learn_new_layers_only=is_learn_new_layers_only, num_epoch=100,
                      can_do_more_then_one_loop=can_do_more_then_one_loop)
 
@@ -165,9 +161,6 @@ if __name__ == "__main__":
     args = extract_args_from_cmd()
 
     all_datasets = glob.glob("./OneDatasetLearning/Classification/*")
-
-    # dataset_sizes = list(map(lambda x: x.shape[0], map(lambda x: pd.read_csv(os.path.join(x, "X_to_train.csv")), all_datasets)))
-    # dataset_with_size = sorted(zip(all_datasets, dataset_sizes), key=lambda x:x[1])
 
     for curr_dataset in all_datasets:
         args.dataset_name = os.path.basename(curr_dataset)
