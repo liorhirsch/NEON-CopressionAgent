@@ -18,29 +18,29 @@ from src.Configuration.ConfigurationValues import ConfigurationValues
 from src.Configuration.StaticConf import StaticConf
 from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX
 from src.NetworkEnv import NetworkEnv
-from src.utils import print_flush
+from src.utils import print_flush, load_models_path
 
 
-def load_models_path(main_path, mode='train'):
-    model_paths = []
-
-    for root, dirs, files in os.walk(main_path):
-        if ('X_to_train.csv' not in files):
-            continue
-        train_data_path = root + '/X_to_train.csv'
-
-        if mode == 'train':
-            model_names = pd.read_csv(root + '/train_models.csv')['0'].to_numpy()
-        elif mode == 'test':
-            model_names = pd.read_csv(root + '/test_models.csv')['0'].to_numpy()
-        else:
-            model_names = files
-
-        model_files = list(map(lambda file: os.path.join(root, file),
-                               filter(lambda file_name: file_name.endswith('.pt') and file_name in model_names, files)))
-        model_paths.append((train_data_path, model_files))
-
-    return model_paths
+# def load_models_path(main_path, mode='train'):
+#     model_paths = []
+#
+#     for root, dirs, files in os.walk(main_path):
+#         if ('X_to_train.csv' not in files):
+#             continue
+#         train_data_path = root + '/X_to_train.csv'
+#
+#         if mode == 'train':
+#             model_names = pd.read_csv(root + '/train_models.csv')['0'].to_numpy()
+#         elif mode == 'test':
+#             model_names = pd.read_csv(root + '/test_models.csv')['0'].to_numpy()
+#         else:
+#             model_names = files
+#
+#         model_files = list(map(lambda file: os.path.join(root, file),
+#                                filter(lambda file_name: file_name.endswith('.pt') and file_name in model_names, files)))
+#         model_paths.append((train_data_path, model_files))
+#
+#     return model_paths
 
 
 def init_conf_values(action_to_compression_rate, num_epoch=100, is_learn_new_layers_only=False,
@@ -57,20 +57,6 @@ def init_conf_values(action_to_compression_rate, num_epoch=100, is_learn_new_lay
 
 torch.manual_seed(0)
 np.random.seed(0)
-
-
-def split_dataset_to_train_test(path):
-    models_path = load_models_path(path, 'all')
-    all_models = models_path[0][1]
-    all_models = list(map(os.path.basename, all_models))
-    train_models, test_models = train_test_split(all_models, test_size=0.2)
-
-    df_train = DataFrame(data=train_models)
-    df_train.to_csv(path + "train_models.csv")
-
-    df_test = DataFrame(data=test_models)
-    df_test.to_csv(path + "test_models.csv")
-
 
 def get_linear_layer(row):
     for l in row:
@@ -183,9 +169,9 @@ if __name__ == "__main__":
     # dataset_sizes = list(map(lambda x: x.shape[0], map(lambda x: pd.read_csv(os.path.join(x, "X_to_train.csv")), all_datasets)))
     # dataset_with_size = sorted(zip(all_datasets, dataset_sizes), key=lambda x:x[1])
 
-    for curr_dataset, _ in all_datasets:
+    for curr_dataset in all_datasets:
         args.dataset_name = os.path.basename(curr_dataset)
-        (curr_dataset)(args.dataset_name)
+        print_flush(args.dataset_name)
         with_loops = '_with_loop' if args.can_do_more_then_one_loop else ""
         test_name = f'Agent_{args.dataset_name}_learn_new_layers_only_{args.learn_new_layers_only}_{with_loops}_Random_Actions'
         main(dataset_name=args.dataset_name, is_learn_new_layers_only=args.learn_new_layers_only,test_name=test_name,
