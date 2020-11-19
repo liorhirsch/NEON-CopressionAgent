@@ -122,7 +122,7 @@ def main(dataset_name, is_learn_new_layers_only, test_name,
 
     for curr_test_model in models_path[0][1]:
         curr_model_to_train = (models_path[0][0], [curr_test_model])
-        agent = A2C_Agent_Reinforce([curr_model_to_train])
+        agent = A2C_Agent_Reinforce([curr_model_to_train], test_name + '_single_test_')
         agent.train()
 
         mode = 'test'
