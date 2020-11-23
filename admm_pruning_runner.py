@@ -1,5 +1,6 @@
 # from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX - must be import!!!!
 import argparse
+import os
 from copy import deepcopy
 from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX
 import numpy as np
@@ -16,7 +17,7 @@ from src.ModelHandlers.ClassificationHandler import Dataset
 from src.NetworkEnv import NetworkEnv
 from src.utils import print_flush, load_models_path, dict2obj, get_model_layers
 
-
+os.environ['MKL_THREADING_LAYER'] = 'GNU'
 
 def init_conf_values(action_to_compression_rate=[], num_epoch=100, is_learn_new_layers_only=False,
                      total_allowed_accuracy_reduction=1, can_do_more_then_one_loop=False):
