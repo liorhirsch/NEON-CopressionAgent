@@ -165,6 +165,6 @@ if __name__ == "__main__":
         args.dataset_name = os.path.basename(curr_dataset)
         print_flush(args.dataset_name)
         with_loops = '_with_loop' if args.can_do_more_then_one_loop else ""
-        test_name = f'Agent_{args.dataset_name}_learn_new_layers_only_{args.learn_new_layers_only}_{with_loops}_Random_Actions'
+        test_name = f'Agent_{args.dataset_name}_learn_new_layers_only_{args.learn_new_layers_only}_{with_loops}_seed{args.seed}_Random_Actions'
         main(dataset_name=args.dataset_name, is_learn_new_layers_only=args.learn_new_layers_only,test_name=test_name,
              can_do_more_then_one_loop=args.can_do_more_then_one_loop)
