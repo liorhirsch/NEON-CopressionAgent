@@ -54,10 +54,6 @@ def init_conf_values(action_to_compression_rate, num_epoch=100, is_learn_new_lay
                              can_do_more_then_one_loop=can_do_more_then_one_loop)
     StaticConf(cv)
 
-
-torch.manual_seed(0)
-np.random.seed(0)
-
 def get_linear_layer(row):
     for l in row:
         if type(l) is nn.Linear:
@@ -122,7 +118,7 @@ def evaluate_model(mode, base_path):
 
 
 def main(dataset_name, is_learn_new_layers_only, test_name,
-         is_to_split_cv=False, can_do_more_then_one_loop = False):
+         can_do_more_then_one_loop = False):
     actions = {
         0: 1,
         1: 0.9,
@@ -148,10 +144,10 @@ def main(dataset_name, is_learn_new_layers_only, test_name,
 def extract_args_from_cmd():
     parser = argparse.ArgumentParser(description='')
     # parser.add_argument('--test_name', type=str)
-    # parser.add_argument('--dataset_name', type=str)
     parser.add_argument('--learn_new_layers_only', type=bool, const=True, default=False, nargs='?')
-    parser.add_argument('--split', type=bool, const=True, default=False, nargs='?')
+    # parser.add_argument('--split', type=bool, const=True, default=False, nargs='?')
     parser.add_argument('--can_do_more_then_one_loop', type=bool, const=True, default=False, nargs='?')
+    parser.add_argument('--seed', type=int, const=0, default=0, nargs='?')
 
     args = parser.parse_args()
     return args
@@ -159,6 +155,9 @@ def extract_args_from_cmd():
 
 if __name__ == "__main__":
     args = extract_args_from_cmd()
+
+    torch.manual_seed(args.seed)
+    np.random.seed(args.seed)
 
     all_datasets = glob.glob("./OneDatasetLearning/Classification/*")
 
@@ -168,5 +167,4 @@ if __name__ == "__main__":
         with_loops = '_with_loop' if args.can_do_more_then_one_loop else ""
         test_name = f'Agent_{args.dataset_name}_learn_new_layers_only_{args.learn_new_layers_only}_{with_loops}_Random_Actions'
         main(dataset_name=args.dataset_name, is_learn_new_layers_only=args.learn_new_layers_only,test_name=test_name,
-             is_to_split_cv=args.split,
              can_do_more_then_one_loop=args.can_do_more_then_one_loop)
