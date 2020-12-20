@@ -112,38 +112,40 @@ def evaluate_model(mode, base_path):
         }
 
         amc_args = dict2obj(amc_args)
+        for i in range(4):
+            train_amc_env = ChannelPruningEnv(model, checkpoint, env.cross_validation_obj,
+                                    preserve_ratio=0.5,
+                                    batch_size=32,
+                                    args=amc_args, export_model=False, use_new_input=False)
 
-        train_amc_env = ChannelPruningEnv(model, checkpoint, env.cross_validation_obj,
-                                preserve_ratio=0.5,
-                                batch_size=32,
-                                args=amc_args, export_model=False, use_new_input=False)
+            nb_states = train_amc_env.layer_embedding.shape[1]
+            nb_actions = 1  # just 1 action here
 
-        nb_states = train_amc_env.layer_embedding.shape[1]
-        nb_actions = 1  # just 1 action here
+            agent = DDPG(nb_states, nb_actions, amc_args)
+            train(amc_args.train_episode, agent, train_amc_env, amc_args.output, amc_args)
 
-        agent = DDPG(nb_states, nb_actions, amc_args)
-        train(amc_args.train_episode, agent, train_amc_env, amc_args.output, amc_args)
+            train_amc_env.reset()
 
-        train_amc_env.reset()
+            for r in train_amc_env.best_strategy:
+                train_amc_env.step(r)
 
-        for r in train_amc_env.best_strategy:
-            train_amc_env.step(r)
+            pruned_linear_layers = get_model_layers(train_amc_env.model)
 
-        pruned_linear_layers = get_model_layers(train_amc_env.model)
+            add_weight_mask_to_all_layers(pruned_linear_layers)
 
-        add_weight_mask_to_all_layers(pruned_linear_layers)
+            # set_mask_to_each_layer
+            set_mask_to_each_layer(pruned_linear_layers)
 
-        # set_mask_to_each_layer
-        set_mask_to_each_layer(pruned_linear_layers)
+            pruned_weights = sum(map(get_quantity_of_zeros_in_layer, pruned_linear_layers))
+            total_weights = sum(map(get_total_weights_of_layer, pruned_linear_layers))
 
-        pruned_weights = sum(map(get_quantity_of_zeros_in_layer, pruned_linear_layers))
-        total_weights = sum(map(get_total_weights_of_layer, pruned_linear_layers))
-
-        pruned_lh = env.create_learning_handler(train_amc_env.model)
-        train_amc_env.model.cuda()
-        pruned_acc_before_ft = pruned_lh.evaluate_model()
-        pruned_lh.train_model()
-        pruned_acc = pruned_lh.evaluate_model()
+            pruned_lh = env.create_learning_handler(train_amc_env.model)
+            train_amc_env.model.cuda()
+            pruned_acc_before_ft = pruned_lh.evaluate_model()
+            pruned_lh.train_model()
+            pruned_acc = pruned_lh.evaluate_model()
+            model = train_amc_env.model.cuda()
+            checkpoint = deepcopy(train_amc_env.model.state_dict())
 
         model_name = env.all_networks[env.net_order[env.curr_net_index - 1]][1]
 
@@ -199,6 +201,6 @@ def extract_args_from_cmd():
 
 if __name__ == "__main__":
     args = extract_args_from_cmd()
-    test_name = f'AMC_{args.dataset_name}'
+    test_name = f'AMC_{args.dataset_name}_4_iters'
 
     main(dataset_name=args.dataset_name, test_name=test_name)
