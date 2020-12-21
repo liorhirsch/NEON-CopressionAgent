@@ -64,7 +64,8 @@ class A2C_Agent_Reinforce():
         reward_not_improving = False
         action_to_compression = StaticConf.getInstance().conf_values.action_to_compression_rate
 
-        min_episode_num = len(self.env.all_networks) * 10
+        warmup_len = len(self.env.all_networks) * 3
+        min_episode_num = len(self.env.all_networks) * 10 + warmup_len
         start_time = time.time()
 
         MAX_TIME_TO_RUN = StaticConf.getInstance().conf_values.MAX_TIME_TO_RUN
@@ -82,10 +83,15 @@ class A2C_Agent_Reinforce():
 
             # rollout trajectory
             while not done:
+
                 value = self.critic_model(state)
                 dist = self.actor_model(state)
 
-                action = dist.sample()
+                if self.episode_idx < warmup_len:
+                    action = torch.Tensor([np.random.randint(0,5)]).cuda()
+                else:
+                    action = dist.sample()
+
                 compression_rate = action_to_compression[action.cpu().numpy()[0]]
                 next_state, reward, done = self.env.step(compression_rate)
 

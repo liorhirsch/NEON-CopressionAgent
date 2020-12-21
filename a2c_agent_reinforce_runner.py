@@ -153,7 +153,7 @@ if __name__ == "__main__":
     args = extract_args_from_cmd()
     print_flush(args)
     with_loops = '_with_loop' if args.can_do_more_then_one_loop else ""
-    test_name = f'Agent_{args.dataset_name}_learn_new_layers_only_{args.learn_new_layers_only}_acc_reduction_{args.allowed_reduction_acc}{with_loops}'
+    test_name = f'Agent_warmup_{args.dataset_name}_learn_new_layers_only_{args.learn_new_layers_only}_acc_reduction_{args.allowed_reduction_acc}{with_loops}'
     main(dataset_name=args.dataset_name, is_learn_new_layers_only=args.learn_new_layers_only, test_name=test_name,
          is_to_split_cv=args.split,
          total_allowed_accuracy_reduction=args.allowed_reduction_acc,
