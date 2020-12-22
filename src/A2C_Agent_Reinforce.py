@@ -1,5 +1,5 @@
 import time
-
+from os.path import basename
 import torch
 import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
@@ -110,6 +110,8 @@ class A2C_Agent_Reinforce():
                     break
 
             writer.add_scalar('Total Reward in Episode', sum(rewards), self.episode_idx)
+            curr_net_file = self.env.all_networks[self.env.net_order[self.env.curr_net_index]][1].split("/")[-1]
+            writer.add_scalar(f'Total Reward for network {basename(curr_net_file)}', sum(rewards), self.episode_idx)
             self.episode_idx += 1
             # next_state = torch.FloatTensor(next_state).to(self.device)
             returns = self.compute_returns(0, rewards, masks)
