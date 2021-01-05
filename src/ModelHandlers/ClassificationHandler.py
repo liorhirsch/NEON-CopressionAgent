@@ -33,6 +33,7 @@ class ClassificationHandler(BasicHandler):
     def evaluate_model(self, validation=False) -> float:
         cv_obj = self.cross_validation_obj
         x_cv, y_cv = (cv_obj.x_val, cv_obj.y_val) if validation else (cv_obj.x_test, cv_obj.y_test)
+        self.model.cuda()
 
         device = StaticConf.getInstance().conf_values.device
         preds = self.model(torch.Tensor(x_cv).to(device).float()).detach().cpu()

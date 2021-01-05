@@ -97,7 +97,7 @@ class NetworkEnv:
 
         return fm
 
-    def step(self, action):
+    def step(self, action, is_to_train=True):
         """
         Compress the network according to the action
         :param action: compression rate
@@ -122,7 +122,8 @@ class NetworkEnv:
             else:
                 learning_handler_new_model.unfreeze_all_layers()
 
-            learning_handler_new_model.train_model()
+            if is_to_train:
+                learning_handler_new_model.train_model()
 
         self.current_model.eval()
         learning_handler_new_model.model.eval()
