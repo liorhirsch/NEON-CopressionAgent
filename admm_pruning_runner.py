@@ -1,5 +1,6 @@
 # from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX - must be import!!!!
 import argparse
+import glob
 import os
 from copy import deepcopy
 from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX
@@ -155,13 +156,23 @@ def main(dataset_name, test_name):
 def extract_args_from_cmd():
     parser = argparse.ArgumentParser(description='')
     # parser.add_argument('--test_name', type=str)
-    parser.add_argument('--dataset_name', type=str)
+    # parser.add_argument('--dataset_name', type=str)
     args = parser.parse_args()
     return args
 
 
 if __name__ == "__main__":
     args = extract_args_from_cmd()
-    test_name = f'ADMM2_{args.dataset_name}'
+    all_datasets = glob.glob("./OneDatasetLearning/Classification/*")
 
-    main(dataset_name=args.dataset_name, test_name=test_name)
+    for idx, curr_dataset in enumerate(all_datasets):
+        dataset_name = os.path.basename(curr_dataset)
+        print_flush(f"{dataset_name} {idx} / {len(all_datasets)}")
+        test_name = f'ADMM2_{args.dataset_name}'
+        main(dataset_name=dataset_name, test_name=test_name)
+
+
+
+
+
+
