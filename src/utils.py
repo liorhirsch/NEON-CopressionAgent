@@ -2,11 +2,13 @@ import os
 from datetime import datetime
 from os.path import join
 import pandas as pd
+import torch
 from sklearn.model_selection import train_test_split
 from torch import nn
+from torch.nn.utils import prune
 
 from NetworkFeatureExtration.src.ModelWithRows import ModelWithRows
-
+import numpy as np
 
 def print_flush(msg):
     now = datetime.now()
@@ -90,3 +92,11 @@ def dict2obj(d):
         obj.__dict__[k] = dict2obj(d[k])
 
     return obj
+
+def add_weight_mask_to_all_layers(pruned_linear_layers):
+    for l in pruned_linear_layers:
+        prune.random_unstructured(l, name="weight", amount=0.0)
+
+def set_mask_to_each_layer(pruned_linear_layers):
+    for curr_l in pruned_linear_layers:
+        curr_l.weight_mask = torch.Tensor(np.array(~(curr_l.weight == 0).cpu(), dtype=float))

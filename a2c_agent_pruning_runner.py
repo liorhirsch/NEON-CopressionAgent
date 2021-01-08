@@ -130,7 +130,7 @@ def main(dataset_name, test_name):
     }
     base_path = f"./OneDatasetLearning/Classification/{dataset_name}/"
 
-    init_conf_values(actions, num_epoch=5)
+    init_conf_values(actions)
     prune_percentages = [.01, .05, .1, .25, .50, .60, .70, .80, .90]
 
     for curr_prune_percentage in prune_percentages:
@@ -138,9 +138,9 @@ def main(dataset_name, test_name):
         results = evaluate_model(mode, base_path, curr_prune_percentage)
         results.to_csv(f"./models/Reinforce_One_Dataset/results_{test_name}_{mode}_pp_{curr_prune_percentage}.csv")
 
-        mode = 'train'
-        results = evaluate_model(mode, base_path, curr_prune_percentage)
-        results.to_csv(f"./models/Reinforce_One_Dataset/results_{test_name}_{mode}_pp_{curr_prune_percentage}.csv")
+        # mode = 'train'
+        # results = evaluate_model(mode, base_path, curr_prune_percentage)
+        # results.to_csv(f"./models/Reinforce_One_Dataset/results_{test_name}_{mode}_pp_{curr_prune_percentage}.csv")
 
 
 def extract_args_from_cmd():

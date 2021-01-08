@@ -19,6 +19,7 @@ from src.utils import print_flush, load_models_path, dict2obj, get_model_layers
 
 os.environ['MKL_THREADING_LAYER'] = 'GNU'
 
+
 def init_conf_values(action_to_compression_rate=[], num_epoch=100, is_learn_new_layers_only=False,
                      total_allowed_accuracy_reduction=1, can_do_more_then_one_loop=False):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -38,12 +39,15 @@ np.random.seed(0)
 def calc_num_parameters(model):
     return sum(p.numel() for p in model.parameters())
 
+
 def get_quantity_of_zeros_in_layer(l):
     return float((l.weight == 0).sum())
+
 
 def get_total_weights_of_layer(l):
     w = l.weight.shape
     return w[0] * w[1]
+
 
 def evaluate_model(mode, base_path):
     models_path = load_models_path(base_path, mode)
@@ -61,7 +65,7 @@ def evaluate_model(mode, base_path):
         model, checkpoint = env.loaded_model.model.cuda(), deepcopy(env.loaded_model.model.state_dict())
 
         admm_args = {
-            'batch_size':64,
+            'batch_size': 64,
             'test_batch_size': 1000,
             'percent': [0.8, 0.92, 0.991, 0.93],
             'alpha': 5e-4,
@@ -88,7 +92,7 @@ def evaluate_model(mode, base_path):
         train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=admm_args.batch_size, shuffle=True)
 
         val_dataset = Dataset(cv.x_val, cv.y_val)
-        val_loader = torch.utils.data.DataLoader(train_dataset, batch_size=admm_args.batch_size, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=admm_args.batch_size, shuffle=True)
 
         model = env.loaded_model.model.cuda()
         optimizer = PruneAdam(model.named_parameters(), lr=admm_args.lr, eps=admm_args.adam_epsilon)
@@ -96,13 +100,17 @@ def evaluate_model(mode, base_path):
 
         mask = apply_l1_prune(model, device, admm_args) if admm_args.l1 else apply_prune(model, device, admm_args)
         total_weights, pruned_weights = print_prune(model)
-        test_admm(admm_args, model, device, val_loader)
+        # test_admm(admm_args, model, device, val_loader)
 
-        retrain_admm(admm_args, model, mask, device, train_loader, val_loader, optimizer)
+        # retrain_admm(admm_args, model, mask, device, train_loader, val_loader, optimizer)
+        pruned_linear_layers = get_model_layers(model)
+        add_weight_mask_to_all_layers(pruned_linear_layers)
+        set_mask_to_each_layer(pruned_linear_layers, mask)
 
         pruned_model_lh = env.create_learning_handler(model)
-        pruned_acc = pruned_model_lh.evaluate_model()
+        pruned_model_lh.train_model()
 
+        pruned_acc = pruned_model_lh.evaluate_model()
 
         model_name = env.all_networks[env.net_order[env.curr_net_index - 1]][1]
 
@@ -117,9 +125,12 @@ def evaluate_model(mode, base_path):
     return results
 
 
-def set_mask_to_each_layer(pruned_linear_layers):
-    for curr_l in pruned_linear_layers:
-        curr_l.weight_mask = torch.Tensor(np.array(~(curr_l.weight == 0).cpu(), dtype=float))
+def set_mask_to_each_layer(pruned_linear_layers, mask):
+    index = 0
+    for curr_m in mask:
+        if len(mask[curr_m].shape) == 1: continue
+        pruned_linear_layers[index].weight_mask = mask[curr_m]
+        index += 1
 
 
 def add_weight_mask_to_all_layers(pruned_linear_layers):

@@ -26,7 +26,8 @@ from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX
 from src.NetworkEnv import NetworkEnv
 import torch.nn.utils.prune as prune
 
-from src.utils import get_model_layers_str, print_flush, load_models_path, dict2obj, get_model_layers
+from src.utils import get_model_layers_str, print_flush, load_models_path, dict2obj, get_model_layers, \
+    add_weight_mask_to_all_layers, set_mask_to_each_layer
 
 
 def init_conf_values(action_to_compression_rate, num_epoch=100, is_learn_new_layers_only=False,
@@ -163,16 +164,6 @@ def evaluate_model(mode, base_path):
                                   'origin_model_arch': get_model_layers(env.loaded_model.model)}, ignore_index=True)
 
     return results
-
-
-def set_mask_to_each_layer(pruned_linear_layers):
-    for curr_l in pruned_linear_layers:
-        curr_l.weight_mask = torch.Tensor(np.array(~(curr_l.weight == 0).cpu(), dtype=float))
-
-
-def add_weight_mask_to_all_layers(pruned_linear_layers):
-    for l in pruned_linear_layers:
-        prune.random_unstructured(l, name="weight", amount=0.0)
 
 
 def main(dataset_name, test_name):
