@@ -97,6 +97,6 @@ def add_weight_mask_to_all_layers(pruned_linear_layers):
     for l in pruned_linear_layers:
         prune.random_unstructured(l, name="weight", amount=0.0)
 
-def set_mask_to_each_layer(pruned_linear_layers):
-    for curr_l in pruned_linear_layers:
-        curr_l.weight_mask = torch.Tensor(np.array(~(curr_l.weight == 0).cpu(), dtype=float))
+def set_mask_to_each_layer(pruned_linear_layers, mask):
+    for idx, curr_l in enumerate(pruned_linear_layers):
+        curr_l.weight_mask = mask[idx]

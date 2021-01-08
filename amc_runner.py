@@ -55,12 +55,15 @@ np.random.seed(0)
 def calc_num_parameters(model):
     return sum(p.numel() for p in model.parameters())
 
+
 def get_quantity_of_zeros_in_layer(l):
     return float((l.weight == 0).sum())
+
 
 def get_total_weights_of_layer(l):
     w = l.weight.shape
     return w[0] * w[1]
+
 
 def evaluate_model(mode, base_path):
     models_path = load_models_path(base_path, mode)
@@ -76,6 +79,10 @@ def evaluate_model(mode, base_path):
         origin_acc = origin_lh.evaluate_model()
 
         model, checkpoint = env.loaded_model.model.cuda(), deepcopy(env.loaded_model.model.state_dict())
+        original_state_dict = deepcopy(env.loaded_model.model.state_dict())
+
+        original_lh = env.create_learning_handler(model)
+        pruned_acc_before_ft = original_lh.evaluate_model()
 
         amc_args = {
             'model': "custom",
@@ -120,9 +127,9 @@ def evaluate_model(mode, base_path):
 
         amc_args = dict2obj(amc_args)
         train_amc_env = ChannelPruningEnv(model, checkpoint, env.cross_validation_obj,
-                                preserve_ratio=0.3,
-                                batch_size=32,
-                                args=amc_args, export_model=False, use_new_input=False)
+                                          preserve_ratio=0.5,
+                                          batch_size=32,
+                                          args=amc_args, export_model=False, use_new_input=False)
 
         nb_states = train_amc_env.layer_embedding.shape[1]
         nb_actions = 1  # just 1 action here
@@ -136,18 +143,21 @@ def evaluate_model(mode, base_path):
             train_amc_env.step(r)
 
         pruned_linear_layers = get_model_layers(train_amc_env.model)
+        mask = list(map(lambda x: torch.Tensor(np.array((x.weight == 0).cpu(), dtype=float)), pruned_linear_layers))
 
+        model.load_state_dict(original_state_dict)
+        pruned_linear_layers = get_model_layers(train_amc_env.model)
         add_weight_mask_to_all_layers(pruned_linear_layers)
 
         # set_mask_to_each_layer
-        set_mask_to_each_layer(pruned_linear_layers)
+        set_mask_to_each_layer(pruned_linear_layers, mask)
 
-        pruned_weights = sum(map(get_quantity_of_zeros_in_layer, pruned_linear_layers))
+        # pruned_weights = sum(map(get_quantity_of_zeros_in_layer, pruned_linear_layers))
+        pruned_weights = np.sum(list(map(lambda x: int(x.sum().cpu().detach().numpy()), mask)))
         total_weights = sum(map(get_total_weights_of_layer, pruned_linear_layers))
 
-        pruned_lh = env.create_learning_handler(train_amc_env.model)
-        train_amc_env.model.cuda()
-        pruned_acc_before_ft = pruned_lh.evaluate_model()
+        pruned_lh = env.create_learning_handler(model)
+        pruned_lh.model.cuda()
         pruned_lh.train_model()
         pruned_acc = pruned_lh.evaluate_model()
         # model = train_amc_env.model.cuda()
@@ -197,6 +207,6 @@ def extract_args_from_cmd():
 
 if __name__ == "__main__":
     args = extract_args_from_cmd()
-    test_name = f'AMC_{args.dataset_name}_preserve_ratio0.3'
+    test_name = f'AMC2_{args.dataset_name}_preserve_ratio'
 
     main(dataset_name=args.dataset_name, test_name=test_name)

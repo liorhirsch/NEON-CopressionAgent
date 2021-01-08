@@ -161,5 +161,5 @@ if __name__ == "__main__":
     for idx, curr_dataset in enumerate(all_datasets):
         dataset_name = os.path.basename(curr_dataset)
         print_flush(f"{dataset_name} {idx + 12} / {len(all_datasets)}")
-        test_name = f'Agent_{dataset_name}_pruning'
+        test_name = f'Agent_{dataset_name}_pruning2'
         main(dataset_name=dataset_name, test_name=test_name)

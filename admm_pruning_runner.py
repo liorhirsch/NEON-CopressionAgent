@@ -162,6 +162,6 @@ def extract_args_from_cmd():
 
 if __name__ == "__main__":
     args = extract_args_from_cmd()
-    test_name = f'ADMM_{args.dataset_name}'
+    test_name = f'ADMM2_{args.dataset_name}'
 
     main(dataset_name=args.dataset_name, test_name=test_name)

@@ -218,15 +218,15 @@ def main(dataset_name, test_name, iterations):
     }
     base_path = f"./OneDatasetLearning/Classification/{dataset_name}/"
 
-    init_conf_values(actions, num_epoch=10)
+    init_conf_values(actions)
     # prune_percentages = [.01, .05, .1, .25, .50, .60, .70, .80, .90]
     mode = 'test'
     results = evaluate_model(mode, base_path, iterations)
     results.to_csv(f"./models/Reinforce_One_Dataset/results_{test_name}_{mode}.csv")
 
-    mode = 'train'
-    results = evaluate_model(mode, base_path, iterations)
-    results.to_csv(f"./models/Reinforce_One_Dataset/results_{test_name}_{mode}.csv")
+    # mode = 'train'
+    # results = evaluate_model(mode, base_path, iterations)
+    # results.to_csv(f"./models/Reinforce_One_Dataset/results_{test_name}_{mode}.csv")
 
 
 def extract_args_from_cmd():
@@ -249,6 +249,6 @@ if __name__ == "__main__":
     for idx, curr_dataset in enumerate(all_datasets):
         dataset_name = os.path.basename(curr_dataset)
         print_flush(f"{dataset_name} {idx} / {len(all_datasets)}")
-        test_name = f'Agent_{dataset_name}_LAP_{args.iterations}'
+        test_name = f'Agent_{dataset_name}_LAP2_{args.iterations}'
         main(dataset_name=dataset_name, test_name=test_name, iterations=args.iterations)
 
