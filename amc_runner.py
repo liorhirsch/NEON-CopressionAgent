@@ -87,7 +87,7 @@ def evaluate_model(mode, base_path):
         amc_args = {
             'model': "custom",
             'data_root': None,
-            "lbound": 0.2,
+            "lbound": 0.1,
             "rbound": 1.,
             "use_real_val": True,
             "acc_metric": 'acc1',
@@ -127,7 +127,7 @@ def evaluate_model(mode, base_path):
 
         amc_args = dict2obj(amc_args)
         train_amc_env = ChannelPruningEnv(model, checkpoint, env.cross_validation_obj,
-                                          preserve_ratio=0.5,
+                                          preserve_ratio=0.2,
                                           batch_size=32,
                                           args=amc_args, export_model=False, use_new_input=False)
 
