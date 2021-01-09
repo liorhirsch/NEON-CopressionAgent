@@ -168,7 +168,7 @@ if __name__ == "__main__":
     for idx, curr_dataset in enumerate(all_datasets):
         dataset_name = os.path.basename(curr_dataset)
         print_flush(f"{dataset_name} {idx} / {len(all_datasets)}")
-        test_name = f'ADMM2_{args.dataset_name}'
+        test_name = f'ADMM2_{dataset_name}'
         main(dataset_name=dataset_name, test_name=test_name)
 
 
