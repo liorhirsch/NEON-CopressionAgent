@@ -75,11 +75,16 @@ def evaluate_model(mode, base_path):
     models_path = load_models_path(base_path, mode)
     env = NetworkEnv(models_path, StaticConf.getInstance().conf_values.can_do_more_then_one_loop)
     action_to_compression = {
-        0: 1,
+        # 0: 1,
         1: 0.9,
         2: 0.8,
         3: 0.7,
-        4: 0.6
+        4: 0.6,
+        5: 0.5,
+        6: 0.4,
+        7: 0.3,
+        8: 0.2,
+        9: 0.1,
     }
 
     results = DataFrame(columns=['model', 'new_acc', 'origin_acc', 'new_param',
@@ -102,7 +107,7 @@ def evaluate_model(mode, base_path):
 
         origin_params = calc_num_parameters(model)
         pruned_params = sum(list(
-            map(lambda x: (x.weight_mask == 0).sum(), filter(lambda x: hasattr(x, 'weight_mask'), model.modules()))))
+            map(lambda x: (x.weight_mask == 1).sum(), filter(lambda x: hasattr(x, 'weight_mask'), model.modules()))))
         new_params = int(pruned_params)
 
         new_lh = env.create_learning_handler(env.current_model)
