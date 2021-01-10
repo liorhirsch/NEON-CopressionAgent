@@ -126,11 +126,16 @@ def evaluate_model(mode, base_path):
 def main(dataset_name, is_learn_new_layers_only, test_name,
          can_do_more_then_one_loop=False):
     actions = {
-        0: 1,
+        # 0: 1,
         1: 0.9,
         2: 0.8,
         3: 0.7,
-        4: 0.6
+        4: 0.6,
+        5: 0.5,
+        6: 0.4,
+        7: 0.3,
+        8: 0.2,
+        9: 0.1,
     }
 
     base_path = f"./OneDatasetLearning/Classification/{dataset_name}/"
@@ -170,6 +175,6 @@ if __name__ == "__main__":
         args.dataset_name = os.path.basename(curr_dataset)
         print_flush(args.dataset_name)
         with_loops = '_with_loop' if args.can_do_more_then_one_loop else ""
-        test_name = f'Agent_{args.dataset_name}_seed{args.seed}_Random_pruning'
+        test_name = f'Agent_{args.dataset_name}_seed{args.seed}_Random_pruning_more_actions'
         main(dataset_name=args.dataset_name, is_learn_new_layers_only=args.learn_new_layers_only, test_name=test_name,
              can_do_more_then_one_loop=args.can_do_more_then_one_loop)
