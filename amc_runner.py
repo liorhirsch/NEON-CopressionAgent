@@ -143,7 +143,7 @@ def evaluate_model(mode, base_path):
             train_amc_env.step(r)
 
         pruned_linear_layers = get_model_layers(train_amc_env.model)
-        mask = list(map(lambda x: torch.Tensor(np.array((x.weight == 0).cpu(), dtype=float)), pruned_linear_layers))
+        mask = list(map(lambda x: torch.Tensor(np.array((x.weight != 0).cpu(), dtype=float)), pruned_linear_layers))
 
         model.load_state_dict(original_state_dict)
         pruned_linear_layers = get_model_layers(train_amc_env.model)
@@ -168,7 +168,7 @@ def evaluate_model(mode, base_path):
         results = results.append({'model': model_name,
                                   'new_acc': max(pruned_acc, pruned_acc_before_ft),
                                   'origin_acc': origin_acc,
-                                  'new_param': total_weights - pruned_weights,
+                                  'new_param': pruned_weights,
                                   'origin_param': total_weights,
                                   'new_model_arch': get_model_layers(train_amc_env.model),
                                   'origin_model_arch': get_model_layers(env.loaded_model.model)}, ignore_index=True)

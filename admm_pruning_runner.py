@@ -68,7 +68,7 @@ def evaluate_model(mode, base_path):
         admm_args = {
             'batch_size': 64,
             'test_batch_size': 1000,
-            'percent': [0.8, 0.92, 0.991, 0.93],
+            'percent': [0.2, 0.2, 0.2, 0.2],
             'alpha': 5e-4,
             'rho': 1e-2,
             'l1': True,
