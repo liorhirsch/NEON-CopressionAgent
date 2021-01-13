@@ -146,11 +146,9 @@ def evaluate_model(mode, base_path):
             for r in train_amc_env.best_strategy:
                 train_amc_env.step(r)
 
-            # pruned_linear_layers = get_model_layers(train_amc_env.model)
-            mask = list(map(lambda x: torch.Tensor(np.array((x.weight != 0).cpu(), dtype=float)), pruned_linear_layers))
             #
             # model.load_state_dict(checkpoint)
-            pruned_linear_layers = get_model_layers(train_amc_env.model)
+            # pruned_linear_layers = get_model_layers(train_amc_env.model)
             # add_weight_mask_to_all_layers(pruned_linear_layers)
             #
             # # set_mask_to_each_layer
@@ -169,6 +167,9 @@ def evaluate_model(mode, base_path):
             model = train_amc_env.model
         # model = train_amc_env.model.cuda()
         # checkpoint = deepcopy(train_amc_env.model.state_dict())
+
+        pruned_linear_layers = get_model_layers(train_amc_env.model)
+        mask = list(map(lambda x: torch.Tensor(np.array((x.weight != 0).cpu(), dtype=float)), pruned_linear_layers))
 
         pruned_weights = np.sum(list(map(lambda x: int(x.sum().cpu().detach().numpy()), mask)))
         total_weights = sum(map(get_total_weights_of_layer, pruned_linear_layers))
