@@ -416,8 +416,9 @@ class ChannelPruningEnv:
 
         for idx in self.prunable_idx + self.buffer_idx:  # get all
             m = m_list[idx]
-            m.old_forward = m.forward
-            m.forward = new_forward(m)
+            if not hasattr(m, 'old_forward'):
+                m.old_forward = m.forward
+                m.forward = new_forward(m)
 
         # now let the image flow
         print('=> Extracting information...')

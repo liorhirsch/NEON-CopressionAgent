@@ -83,52 +83,53 @@ def evaluate_model(mode, base_path):
 
         model, checkpoint = env.loaded_model.model.cuda(), deepcopy(env.loaded_model.model.state_dict())
 
+        original_lh = env.create_learning_handler(model)
+        pruned_acc_before_ft = original_lh.evaluate_model()
+        amc_args = {
+            'model': "custom",
+            'data_root': None,
+            "lbound": 0.1,
+            "rbound": 1.,
+            "use_real_val": True,
+            "acc_metric": 'acc1',
+            "reward": 'acc_flops_reward',
+            'n_calibration_batches': 60,
+            'n_points_per_layer': 10,
+            'channel_round': 8,
+            'hidden1': 300,
+            'hidden2': 300,
+            'lr_c': 1e-3,
+            'lr_a': 1e-4,
+            # 'warmup': 100,
+            'warmup': 1,
+            'discount': 1.,
+            'bsize': 64,
+            'rmsize': 100,
+            'window_length': 1,
+            'tau': 0.01,
+            'init_delta': 0.5,
+            'delta_decay': 0.95,
+            'max_episode_length': 1e9,
+            'output': './logs',
+            'debug': False,
+            'init_w': 0.003,
+            # 'train_episode': 800,
+            'train_episode': 8,
+            'epsilon': 50000,
+            'seed': 1,
+            'n_gpu': 1,
+            'n_worker': 16,
+            'data_bsize': 50,
+            'resume': 'default',
+            'ratios': None,
+            'channels': None,
+            'export_path': None,
+            'use_new_input': False,
+            'job': 'train',
+        }
+        amc_args = dict2obj(amc_args)
+
         for i in range(4):
-            original_lh = env.create_learning_handler(model)
-            pruned_acc_before_ft = original_lh.evaluate_model()
-
-            amc_args = {
-                'model': "custom",
-                'data_root': None,
-                "lbound": 0.1,
-                "rbound": 1.,
-                "use_real_val": True,
-                "acc_metric": 'acc1',
-                "reward": 'acc_flops_reward',
-                'n_calibration_batches': 60,
-                'n_points_per_layer': 10,
-                'channel_round': 8,
-                'hidden1': 300,
-                'hidden2': 300,
-                'lr_c': 1e-3,
-                'lr_a': 1e-4,
-                'warmup': 100,
-                'discount': 1.,
-                'bsize': 64,
-                'rmsize': 100,
-                'window_length': 1,
-                'tau': 0.01,
-                'init_delta': 0.5,
-                'delta_decay': 0.95,
-                'max_episode_length': 1e9,
-                'output': './logs',
-                'debug': False,
-                'init_w': 0.003,
-                'train_episode': 800,
-                'epsilon': 50000,
-                'seed': 1,
-                'n_gpu': 1,
-                'n_worker': 16,
-                'data_bsize': 50,
-                'resume': 'default',
-                'ratios': None,
-                'channels': None,
-                'export_path': None,
-                'use_new_input': False,
-                'job': 'train',
-            }
-
-            amc_args = dict2obj(amc_args)
             train_amc_env = ChannelPruningEnv(model, checkpoint, env.cross_validation_obj,
                                               preserve_ratio=0.2,
                                               batch_size=32,
@@ -145,37 +146,39 @@ def evaluate_model(mode, base_path):
             for r in train_amc_env.best_strategy:
                 train_amc_env.step(r)
 
-            pruned_linear_layers = get_model_layers(train_amc_env.model)
+            # pruned_linear_layers = get_model_layers(train_amc_env.model)
             mask = list(map(lambda x: torch.Tensor(np.array((x.weight != 0).cpu(), dtype=float)), pruned_linear_layers))
-
-            model.load_state_dict(checkpoint)
+            #
+            # model.load_state_dict(checkpoint)
             pruned_linear_layers = get_model_layers(train_amc_env.model)
-            add_weight_mask_to_all_layers(pruned_linear_layers)
-
-            # set_mask_to_each_layer
-            set_mask_to_each_layer(pruned_linear_layers, mask)
-
+            # add_weight_mask_to_all_layers(pruned_linear_layers)
+            #
+            # # set_mask_to_each_layer
+            # set_mask_to_each_layer(pruned_linear_layers, mask)
+            #
             # pruned_weights = sum(map(get_quantity_of_zeros_in_layer, pruned_linear_layers))
-            pruned_weights = np.sum(list(map(lambda x: int(x.sum().cpu().detach().numpy()), mask)))
-            total_weights = sum(map(get_total_weights_of_layer, pruned_linear_layers))
 
-            pruned_lh = env.create_learning_handler(model)
-            pruned_lh.model.cuda()
-            pruned_lh.train_model()
-            pruned_acc = pruned_lh.evaluate_model()
+            #
 
-            new_model_layers = get_model_layers(model)
-            for curr_layer in new_model_layers:
-                curr_layer.weight = torch.where(curr_layer.weight_mask == 0, curr_layer.weight_mask, curr_layer.weight)
+            #
+            # new_model_layers = get_model_layers(model)
+            # for curr_layer in new_model_layers:
+            #     curr_layer.weight = nn.Parameter(torch.where(curr_layer.weight_mask == 0, curr_layer.weight_mask, curr_layer.weight))
 
-            checkpoint = deepcopy(model.state_dict())
-
-
-
-
-
+            checkpoint = deepcopy(train_amc_env.model.state_dict())
+            model = train_amc_env.model
         # model = train_amc_env.model.cuda()
         # checkpoint = deepcopy(train_amc_env.model.state_dict())
+
+        pruned_weights = np.sum(list(map(lambda x: int(x.sum().cpu().detach().numpy()), mask)))
+        total_weights = sum(map(get_total_weights_of_layer, pruned_linear_layers))
+        add_weight_mask_to_all_layers(pruned_linear_layers)
+        set_mask_to_each_layer(pruned_linear_layers, mask)
+
+        pruned_lh = env.create_learning_handler(model)
+        pruned_lh.model.cuda()
+        pruned_lh.train_model()
+        pruned_acc = pruned_lh.evaluate_model()
 
         model_name = env.all_networks[env.net_order[env.curr_net_index - 1]][1]
 
