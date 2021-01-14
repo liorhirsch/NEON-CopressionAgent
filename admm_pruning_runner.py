@@ -3,6 +3,8 @@ import argparse
 import glob
 import os
 from copy import deepcopy
+from datetime import datetime
+
 from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX
 import numpy as np
 import torch
@@ -16,7 +18,7 @@ from src.Configuration.ConfigurationValues import ConfigurationValues
 from src.Configuration.StaticConf import StaticConf
 from src.ModelHandlers.ClassificationHandler import Dataset
 from src.NetworkEnv import NetworkEnv
-from src.utils import print_flush, load_models_path, dict2obj, get_model_layers
+from src.utils import print_flush, load_models_path, dict2obj, get_model_layers, save_times_csv
 
 os.environ['MKL_THREADING_LAYER'] = 'GNU'
 
@@ -73,9 +75,9 @@ def evaluate_model(mode, base_path):
             'rho': 1e-2,
             'l1': True,
             'l2': False,
-            'num_pre_epochs': 3,
-            'num_epochs': 10,
-            'num_re_epochs': 3,
+            'num_pre_epochs': 10,
+            'num_epochs': 50,
+            'num_re_epochs': 10,
             'lr': 1e-3,
             'adam_epsilon': 1e-8,
             'no_cuda': False,
@@ -164,15 +166,15 @@ def extract_args_from_cmd():
 if __name__ == "__main__":
     args = extract_args_from_cmd()
     all_datasets = glob.glob("./OneDatasetLearning/Classification/*")
+    all_times = []
 
     for idx, curr_dataset in enumerate(all_datasets):
         dataset_name = os.path.basename(curr_dataset)
         print_flush(f"{dataset_name} {idx} / {len(all_datasets)}")
         test_name = f'ADMM2_lower_precentages_{dataset_name}'
+        now = datetime.now()
         main(dataset_name=dataset_name, test_name=test_name)
+        total_time = (datetime.now() - now).total_seconds()
+        all_times.append(total_time)
 
-
-
-
-
-
+    save_times_csv(test_name, all_times, all_datasets)

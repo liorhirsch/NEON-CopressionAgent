@@ -22,7 +22,7 @@ from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX
 from src.NetworkEnv import NetworkEnv
 import torch.nn.utils.prune as prune
 
-from src.utils import load_models_path, print_flush
+from src.utils import load_models_path, print_flush, save_times_csv
 
 
 def init_conf_values(action_to_compression_rate, num_epoch=100, is_learn_new_layers_only=False,
@@ -157,9 +157,15 @@ def extract_args_from_cmd():
 if __name__ == "__main__":
     args = extract_args_from_cmd()
     all_datasets = glob.glob("./OneDatasetLearning/Classification/*")
+    all_times = []
 
     for idx, curr_dataset in enumerate(all_datasets):
         dataset_name = os.path.basename(curr_dataset)
         print_flush(f"{dataset_name} {idx} / {len(all_datasets)}")
         test_name = f'Agent_{dataset_name}_pruning2'
+        now = datetime.now()
         main(dataset_name=dataset_name, test_name=test_name)
+        total_time = (datetime.now() - now).total_seconds()
+        all_times.append(total_time)
+
+    save_times_csv(test_name, all_times, all_datasets)

@@ -100,3 +100,8 @@ def add_weight_mask_to_all_layers(pruned_linear_layers):
 def set_mask_to_each_layer(pruned_linear_layers, mask):
     for idx, curr_l in enumerate(pruned_linear_layers):
         curr_l.weight_mask = mask[idx]
+
+def save_times_csv(name, times, datasets):
+    dataset_names = list(map(os.path.basename, datasets))
+    data = np.array([dataset_names, times]).transpose()
+    pd.DataFrame(data, columns=['Dataset', 'time']).to_csv(f"./times/{name}.csv")

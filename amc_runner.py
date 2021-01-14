@@ -78,9 +78,6 @@ def evaluate_model(mode, base_path):
         origin_lh = env.create_learning_handler(env.loaded_model.model)
         origin_acc = origin_lh.evaluate_model()
 
-
-
-
         model, checkpoint = env.loaded_model.model.cuda(), deepcopy(env.loaded_model.model.state_dict())
 
         original_lh = env.create_learning_handler(model)
@@ -100,7 +97,7 @@ def evaluate_model(mode, base_path):
             'hidden2': 300,
             'lr_c': 1e-3,
             'lr_a': 1e-4,
-            'warmup': 100,
+            'warmup': 50,
             'discount': 1.,
             'bsize': 64,
             'rmsize': 100,
@@ -126,6 +123,8 @@ def evaluate_model(mode, base_path):
             'job': 'train',
         }
         amc_args = dict2obj(amc_args)
+        train_times = 0
+        eval_time = 0
 
         for i in range(10):
             train_amc_env = ChannelPruningEnv(model, checkpoint, env.cross_validation_obj,
@@ -133,39 +132,30 @@ def evaluate_model(mode, base_path):
                                               batch_size=32,
                                               args=amc_args, export_model=False, use_new_input=False)
 
+            now = datetime.now()
+
             nb_states = train_amc_env.layer_embedding.shape[1]
             nb_actions = 1  # just 1 action here
 
             agent = DDPG(nb_states, nb_actions, amc_args)
             train(amc_args.train_episode, agent, train_amc_env, amc_args.output, amc_args)
 
+            total_time = (datetime.now() - now).total_seconds()
+            train_times += total_time
+
             train_amc_env.reset()
 
+            now = datetime.now()
             for r in train_amc_env.best_strategy:
                 train_amc_env.step(r)
-
-            #
-            # model.load_state_dict(checkpoint)
-            # pruned_linear_layers = get_model_layers(train_amc_env.model)
-            # add_weight_mask_to_all_layers(pruned_linear_layers)
-            #
-            # # set_mask_to_each_layer
-            # set_mask_to_each_layer(pruned_linear_layers, mask)
-            #
-            # pruned_weights = sum(map(get_quantity_of_zeros_in_layer, pruned_linear_layers))
-
-            #
-
-            #
-            # new_model_layers = get_model_layers(model)
-            # for curr_layer in new_model_layers:
-            #     curr_layer.weight = nn.Parameter(torch.where(curr_layer.weight_mask == 0, curr_layer.weight_mask, curr_layer.weight))
+            total_time = (datetime.now() - now).total_seconds()
+            eval_time += total_time
 
             checkpoint = deepcopy(train_amc_env.model.state_dict())
             model = train_amc_env.model
-        # model = train_amc_env.model.cuda()
-        # checkpoint = deepcopy(train_amc_env.model.state_dict())
 
+
+        now = datetime.now()
         pruned_linear_layers = get_model_layers(train_amc_env.model)
         mask = list(map(lambda x: torch.Tensor(np.array((x.weight != 0).cpu(), dtype=float)), pruned_linear_layers))
 
@@ -179,6 +169,9 @@ def evaluate_model(mode, base_path):
         pruned_lh.train_model()
         pruned_acc = pruned_lh.evaluate_model()
 
+        total_time = (datetime.now() - now).total_seconds()
+        eval_time += total_time
+
         model_name = env.all_networks[env.net_order[env.curr_net_index - 1]][1]
 
         results = results.append({'model': model_name,
@@ -189,7 +182,7 @@ def evaluate_model(mode, base_path):
                                   'new_model_arch': get_model_layers(train_amc_env.model),
                                   'origin_model_arch': get_model_layers(env.loaded_model.model)}, ignore_index=True)
 
-    return results
+    return results, train_times, eval_time
 
 
 def main(dataset_name, test_name):
@@ -205,9 +198,10 @@ def main(dataset_name, test_name):
     init_conf_values(actions)
 
     mode = 'test'
-    results = evaluate_model(mode, base_path)
+    results, train_times, eval_time = evaluate_model(mode, base_path)
     results.to_csv(f"./models/Reinforce_One_Dataset/results_{test_name}_{mode}_amc.csv")
 
+    return train_times, eval_time
     # mode = 'train'
     # results = evaluate_model(mode, base_path)
     # results.to_csv(f"./models/Reinforce_One_Dataset/results_{test_name}_{mode}_amc.csv")
@@ -226,4 +220,8 @@ if __name__ == "__main__":
     sys.setrecursionlimit(10000)
     test_name = f'AMC2_10iters_{args.dataset_name}'
 
-    main(dataset_name=args.dataset_name, test_name=test_name)
+
+    train_times, eval_time = main(dataset_name=args.dataset_name, test_name=test_name)
+
+    data = np.array([['train', 'eval'], [train_times, eval_time]]).transpose()
+    pd.DataFrame(data, columns=['Dataset', 'time']).to_csv(f"./times/{test_name}.csv")
