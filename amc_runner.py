@@ -127,7 +127,7 @@ def evaluate_model(mode, base_path):
         }
         amc_args = dict2obj(amc_args)
 
-        for i in range(4):
+        for i in range(10):
             train_amc_env = ChannelPruningEnv(model, checkpoint, env.cross_validation_obj,
                                               preserve_ratio=0.2,
                                               batch_size=32,
@@ -224,6 +224,6 @@ def extract_args_from_cmd():
 if __name__ == "__main__":
     args = extract_args_from_cmd()
     sys.setrecursionlimit(10000)
-    test_name = f'AMC2_4iters_{args.dataset_name}'
+    test_name = f'AMC2_10iters_{args.dataset_name}'
 
     main(dataset_name=args.dataset_name, test_name=test_name)
