@@ -28,25 +28,25 @@ def train(train_dataset, test_dataset, network, optimizer, num_iterations, batch
 	optimizer = optimizer(network.parameters())  # create optimizer (argument: function)
 
 	for i, (x, y) in enumerate(train_loader):
-		x = x.cuda()
+		x = x.cuda().float()
 		y = y.cuda()
 
 		optimizer.zero_grad()
 		out = network(x)
-		loss = F.cross_entropy(out, y)
+		loss = F.cross_entropy(out, y.argmax(axis=1))
 		loss.backward()
 		optimizer.step()
 
-		if (i + 1) % print_step == 0:
-			test_acc, test_loss = test(network, test_dataset)
-			print(f'Steps: {i + 1}/{num_iterations}\tTest loss: {test_loss:.3f}\tTest acc: {test_acc:.2f}', end='\r')
-			network.train()  # train mode
+		# if (i + 1) % print_step == 0:
+		# 	test_acc, test_loss = test(network, test_dataset)
+		# 	print(f'Steps: {i + 1}/{num_iterations}\tTest loss: {test_loss:.3f}\tTest acc: {test_acc:.2f}', end='\r')
+		# 	network.train()  # train mode
 
-	train_acc, train_loss = test(network, train_dataset)
-	test_acc, test_loss = test(network, test_dataset)
-	print(f'Train loss: {train_loss:.3f}\tTrain acc: {train_acc:.2f}\tTest loss: {test_loss:.3f}\tTest acc: {test_acc:.2f}')
+	# train_acc, train_loss = test(network, train_dataset)
+	# test_acc, test_loss = test(network, test_dataset)
+	# print(f'Train loss: {train/_loss:.3f}\tTrain acc: {train_acc:.2f}\tTest loss: {test_loss:.3f}\tTest acc: {test_acc:.2f}')
 
-	return train_acc, train_loss, test_acc, test_loss
+	# return train_acc, train_loss, test_acc, test_loss
 
 
 def test(network, dataset, batch_size=64):
@@ -56,7 +56,7 @@ def test(network, dataset, batch_size=64):
 	correct = 0
 	loss = 0
 	for i, (x, y) in enumerate(loader):
-		x = x.cuda()
+		x = x.cuda().float()
 		y = y.cuda()
 
 		with torch.no_grad():
