@@ -98,20 +98,24 @@ def evaluate_model(mode, base_path):
         val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=admm_args.batch_size, shuffle=True)
 
         model = env.loaded_model.model.cuda()
-        optimizer = PruneAdam(model.named_parameters(), lr=admm_args.lr, eps=admm_args.adam_epsilon)
-        train_admm(admm_args, model, device, train_loader, val_loader, optimizer)
 
-        mask = apply_l1_prune(model, device, admm_args) if admm_args.l1 else apply_prune(model, device, admm_args)
+        for _ in range(4):
+            optimizer = PruneAdam(model.named_parameters(), lr=admm_args.lr, eps=admm_args.adam_epsilon)
+            train_admm(admm_args, model, device, train_loader, val_loader, optimizer)
+
+            mask = apply_l1_prune(model, device, admm_args) if admm_args.l1 else apply_prune(model, device, admm_args)
+            # test_admm(admm_args, model, device, val_loader)
+
+            retrain_admm(admm_args, model, mask, device, train_loader, val_loader, optimizer)
+
+
         total_weights, pruned_weights = print_prune(model)
-        # test_admm(admm_args, model, device, val_loader)
-
-        # retrain_admm(admm_args, model, mask, device, train_loader, val_loader, optimizer)
         pruned_linear_layers = get_model_layers(model)
         add_weight_mask_to_all_layers(pruned_linear_layers)
         set_mask_to_each_layer(pruned_linear_layers, mask)
 
         pruned_model_lh = env.create_learning_handler(model)
-        pruned_model_lh.train_model()
+        # pruned_model_lh.train_model()
 
         pruned_acc = pruned_model_lh.evaluate_model()
 
@@ -171,7 +175,7 @@ if __name__ == "__main__":
     for idx, curr_dataset in enumerate(all_datasets):
         dataset_name = os.path.basename(curr_dataset)
         print_flush(f"{dataset_name} {idx} / {len(all_datasets)}")
-        test_name = f'ADMM2_lower_precentages_{dataset_name}'
+        test_name = f'ADMM2_4iters_lower_precentages_{dataset_name}'
         now = datetime.now()
         main(dataset_name=dataset_name, test_name=test_name)
         total_time = (datetime.now() - now).total_seconds()
