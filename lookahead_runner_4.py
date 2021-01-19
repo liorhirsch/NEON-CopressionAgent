@@ -170,32 +170,6 @@ def look_ahead_prune_model(env: NetworkEnv):
         # perpare weights and masks to prune
         weights = network.get_weights()
         masks = network.get_masks()
-
-        # if 'lap_act' in args.method:
-        #     act_rate = get_activation(network, train_dataset)
-        #     assert len(act_rate) == len(weights) - 1
-        #     for i in range(len(weights) - 1):
-        #         if len(act_rate[i].shape) == 1:
-        #             act = act_rate[i].sqrt()
-        #             size = list(act.shape)
-        #             size = [size[0], 1]
-        #             act = act.view(size).repeat([1, weights[i].shape[1]])
-        #             weights[i] *= act
-        #         elif len(act_rate[i].shape) == 3:
-        #             act = act_rate[i].sqrt().sum(dim=1).sum(dim=1)
-        #             size = list(act.shape)
-        #             size = [size[0], 1, 1, 1]
-        #             act = act.view(size).repeat([1, weights[i].shape[1], weights[i].shape[2], weights[i].shape[3]])
-        #             weights[i] *= act
-        #         else:
-        #             assert False
-
-        # if 'obd' in args.method:
-        #     assert 'bn' not in args.method  # OBD for BN is not implemented
-        #     masks = pruning_method(deepcopy(network), train_dataset, prune_ratios, args.network, args.dataset)
-        # elif 'bn' in args.method:
-        #     masks = pruning_method(weights, masks, prune_ratios, network.get_bn_weights())
-        # else:
         masks = pruning_method(weights, masks, prune_ratios)
 
         network.set_masks(masks)
