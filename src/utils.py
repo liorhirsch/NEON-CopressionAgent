@@ -4,6 +4,7 @@ from os.path import join
 import pandas as pd
 import torch
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 from torch import nn
 from torch.nn.utils import prune
 
@@ -105,3 +106,10 @@ def save_times_csv(name, times, datasets):
     dataset_names = list(map(os.path.basename, datasets))
     data = np.array([dataset_names, times]).transpose()
     pd.DataFrame(data, columns=['Dataset', 'time']).to_csv(f"./times/{name}.csv")
+
+def normalize_2d_data(data):
+    scaler = StandardScaler()
+    return scaler.fit_transform(data)
+
+def normalize_3d_data(data):
+    return np.array(list(map(normalize_2d_data, data)))
