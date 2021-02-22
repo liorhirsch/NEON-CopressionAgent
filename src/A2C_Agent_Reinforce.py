@@ -64,7 +64,7 @@ class A2C_Agent_Reinforce():
         reward_not_improving = False
         action_to_compression = StaticConf.getInstance().conf_values.action_to_compression_rate
 
-        warmup_len = len(self.env.all_networks) * 3
+        warmup_len = len(self.env.all_networks) * 2
         min_episode_num = len(self.env.all_networks) * 10 + warmup_len
         start_time = time.time()
 
