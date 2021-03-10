@@ -26,11 +26,13 @@ class NetworkEnv:
     loaded_model: LoadedModel
     current_model: nn.Module
     actions_history: List[float]
+    max_samples_for_fe: int
 
-    def __init__(self, networks_path, can_do_more_then_one_loop = False):
+    def __init__(self, networks_path, can_do_more_then_one_loop=False, max_samples_for_fe=5000):
         # self.networks_path = [networks_path[0]]
         self.all_networks = []
         self.can_do_more_then_one_loop = can_do_more_then_one_loop
+        self.max_samples_for_fe = max_samples_for_fe
 
         self.networks_path = networks_path
         for group in networks_path:
@@ -50,10 +52,11 @@ class NetworkEnv:
         }
 
     def create_train_test_splits(self):
-        X_train, X_val, Y_train, Y_val = train_test_split(self.X_train_data.values, self.Y_train_data.values, test_size = 0.2, random_state=1)
+        X_train, X_val, Y_train, Y_val = train_test_split(self.X_train_data.values, self.Y_train_data.values,
+                                                          test_size=0.2, random_state=1)
         self.cross_validation_obj = CrossValidationObject(X_train, X_val, self.X_test_data.values,
                                                           Y_train, Y_val, self.Y_test_data.values)
-            # *train_test_split(self.X_train_data.values, self.Y_train_data.values, test_size=0.2, random_state=0))
+        # *train_test_split(self.X_train_data.values, self.Y_train_data.values, test_size=0.2, random_state=0))
 
     def reset(self):
         """
@@ -82,13 +85,14 @@ class NetworkEnv:
         y_train_path = str.replace(x_train_path, 'X_train', 'Y_train')
         y_test_path = str.replace(x_train_path, 'X_train', 'Y_val')
 
-
         device = StaticConf.getInstance().conf_values.device
-        self.loaded_model, self.X_train_data, self.Y_train_data = load_model_and_data(selected_net_path, x_train_path, y_train_path, device)
+        self.loaded_model, self.X_train_data, self.Y_train_data = load_model_and_data(selected_net_path, x_train_path,
+                                                                                      y_train_path, device)
         self.X_test_data, self.Y_test_data = pd.read_csv(x_test_path), pd.read_csv(y_test_path)
 
         self.current_model = self.loaded_model.model
-        self.feature_extractor = FeatureExtractor(self.loaded_model.model, self.X_train_data._values, device)
+
+        self.create_fe(device)
         fm = self.feature_extractor.extract_features(self.layer_index - 1)
         self.create_train_test_splits()
 
@@ -96,6 +100,16 @@ class NetworkEnv:
         self.original_acc = learning_handler_original_model.evaluate_model(validation=True)
 
         return fm
+
+    def create_fe(self, device):
+        number_of_sampled = min(self.max_samples_for_fe, max(self.max_samples_for_fe, len(self.X_train_data) // 10))
+        test_size = number_of_sampled / len(self.X_train_data)
+        if test_size >= 1:
+            data_for_feature_extraction = self.X_train_data._values
+        else:
+            _, data_for_feature_extraction = train_test_split(self.X_train_data._values, test_size=test_size,
+                                                              stratify=self.Y_train_data)
+        self.feature_extractor = FeatureExtractor(self.loaded_model.model, data_for_feature_extraction, device)
 
     def step(self, action, is_to_train=True):
         """
@@ -142,7 +156,8 @@ class NetworkEnv:
 
         # get FM for the new model and the next layer.
         device = StaticConf.getInstance().conf_values.device
-        self.feature_extractor = FeatureExtractor(self.current_model, self.X_train_data._values, device)
+
+        self.create_fe(device)
         fm = self.feature_extractor.extract_features(self.layer_index - 1)
 
         # Compute done
@@ -155,14 +170,15 @@ class NetworkEnv:
             done = self.is_done_more_them_one_loop(number_of_layers)
         return fm, reward, done
 
-    def is_done_more_them_one_loop(self, number_of_layers, max_itres = 4):
+    def is_done_more_them_one_loop(self, number_of_layers, max_itres=4):
         """
         Checks if all last updates are 0 OR if the agent went through the whole layers max_iterations times
         :param number_of_layers:
         :param max_itres:
         :return:
         """
-        return (len(self.actions_history) >= number_of_layers and all(a == 1 for a in self.actions_history[-number_of_layers:]))  or \
+        return (len(self.actions_history) >= number_of_layers and all(
+            a == 1 for a in self.actions_history[-number_of_layers:])) or \
                len(self.actions_history) == max_itres * number_of_layers
 
     def compute_reward1(self, curr_model, new_model, new_acc, prev_acc, mission_type):
@@ -265,7 +281,6 @@ class NetworkEnv:
         new_model = nn.Sequential(*new_model_layers)
         return new_model
 
-
     def deep_copy_model(self, model):
         new_model_layers = []
         model_with_rows = ModelWithRows(model)
@@ -274,7 +289,6 @@ class NetworkEnv:
             new_model_layers.append(copy.deepcopy(l))
 
         return nn.Sequential(*new_model_layers)
-
 
     def is_to_change_bn_layer(self, curr_layer, last_linear_layer):
         return type(curr_layer) is nn.BatchNorm1d and \
@@ -290,4 +304,3 @@ class NetworkEnv:
 
         prune.ln_structured(layer_to_change, 'weight', 1 - action, n=1, dim=0)
         return self.current_model
-
