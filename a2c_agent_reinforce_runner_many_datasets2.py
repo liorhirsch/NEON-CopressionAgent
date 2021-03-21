@@ -1,6 +1,7 @@
 # from NetworkFeatureExtration.src.ModelClasses.NetX.netX import NetX - must be import!!!!
 import glob
 import os
+import time
 from datetime import datetime
 import sys
 import argparse
@@ -59,12 +60,15 @@ def evaluate_model(mode, base_path, agent):
     }
 
     results = DataFrame(columns=['model', 'new_acc', 'origin_acc', 'new_param',
-                                 'origin_param', 'new_model_arch', 'origin_model_arch'])
+                                 'origin_param', 'new_model_arch', 'origin_model_arch',
+                                 'evaluation_time'])
 
     for i in range(len(env.all_networks)):
         print_flush(f"network index {i}")
         state = env.reset()
         done = False
+
+        t_start = time.time()
 
         while not done:
             # dist, value = agent.actor_critic_model(state)
@@ -76,6 +80,7 @@ def evaluate_model(mode, base_path, agent):
             next_state, reward, done = env.step(compression_rate)
             state = next_state
 
+        t_end = time.time()
         new_lh = env.create_learning_handler(env.current_model)
         origin_lh = env.create_learning_handler(env.loaded_model.model)
 
@@ -95,7 +100,8 @@ def evaluate_model(mode, base_path, agent):
                                   'new_param': new_params,
                                   'origin_param': origin_params,
                                   'new_model_arch': get_model_layers_str(env.current_model),
-                                  'origin_model_arch': get_model_layers_str(env.loaded_model.model)}, ignore_index=True)
+                                  'origin_model_arch': get_model_layers_str(env.loaded_model.model),
+                                  'evaluation_time': t_end - t_start}, ignore_index=True)
 
     return results
 
@@ -105,6 +111,7 @@ def main(fold, is_learn_new_layers_only, test_name,
          prune=False, dataset_split_seed=0):
     base_path = f"./OneDatasetLearning/Classification/"
     datasets = list(map(os.path.basename, glob.glob(join(base_path, "*"))))
+    np.random.shuffle(datasets)
     num_of_folds = 6
 
     flatten = lambda l: [item for sublist in l for item in sublist]
