@@ -71,7 +71,7 @@ class A2C_Agent_Reinforce():
         MAX_TIME_TO_RUN = StaticConf.getInstance().conf_values.MAX_TIME_TO_RUN
 
         while (self.episode_idx < min_episode_num or (not reward_not_improving)) and \
-              time.time() < start_time + MAX_TIME_TO_RUN:
+                time.time() < start_time + MAX_TIME_TO_RUN:
             print_flush("Episode {}/{}".format(self.episode_idx, self.num_episodes))
             state = self.env.reset()
             log_probs = []
@@ -88,7 +88,7 @@ class A2C_Agent_Reinforce():
                 dist = self.actor_model(state)
 
                 if self.episode_idx < warmup_len:
-                    action = torch.Tensor([np.random.randint(0,5)]).cuda()
+                    action = torch.Tensor([np.random.randint(0, 5)]).cuda()
                 else:
                     action = dist.sample()
 
@@ -146,13 +146,17 @@ class A2C_Agent_Reinforce():
             if max_reward_in_all_episodes < v(curr_reward):
                 max_reward_in_all_episodes = v(curr_reward)
 
-
-
-            if len(all_rewards_episodes) > min_episode_num and max_reward_in_all_episodes >= max(all_rewards_episodes[-min_episode_num:]):
+            if len(all_rewards_episodes) > min_episode_num and max_reward_in_all_episodes >= max(
+                    all_rewards_episodes[-min_episode_num:]):
                 reward_not_improving = True
 
             if len(all_rewards_episodes) > 5 * min_episode_num:
                 break
+
+            print_flush(f"DONE Episode {self.episode_idx}")
+
+        print_flush("DONE Training")
+        return
 
 
 def v(a):

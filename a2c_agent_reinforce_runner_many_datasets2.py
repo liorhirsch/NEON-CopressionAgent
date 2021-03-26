@@ -33,8 +33,7 @@ def init_conf_values(action_to_compression_rate, num_epoch=100, is_learn_new_lay
     print_flush(f"device name is {torch.cuda.get_device_name(0)}")
 
     num_actions = len(action_to_compression_rate)
-    # MAX_TIME_TO_RUN = 60 * 60 * 24 * 3.5
-    MAX_TIME_TO_RUN = 60
+    MAX_TIME_TO_RUN = 60 * 60 * 24 * 3
     cv = ConfigurationValues(device, action_to_compression_rate=action_to_compression_rate, num_actions=num_actions,
                              num_epoch=num_epoch,
                              is_learn_new_layers_only=is_learn_new_layers_only,
@@ -167,13 +166,13 @@ def main(fold, is_learn_new_layers_only, test_name,
 
     print_flush("Starting evaluate test datasets")
     for d in test_datasets:
-        mode = 'test'
+        mode = 'all'
         results = evaluate_model(mode, join(base_path, d), agent)
         results.to_csv(f"./models/Reinforce_One_Dataset/results_{d}_{test_name}_{mode}_unseen_dataset.csv")
 
-        mode = 'train'
-        results = evaluate_model(mode, join(base_path, d), agent)
-        results.to_csv(f"./models/Reinforce_One_Dataset/results_{d}_{test_name}_{mode}_unseen_dataset.csv")
+        # mode = 'train'
+        # results = evaluate_model(mode, join(base_path, d), agent)
+        # results.to_csv(f"./models/Reinforce_One_Dataset/results_{d}_{test_name}_{mode}_unseen_dataset.csv")
 
 
 def extract_args_from_cmd():
