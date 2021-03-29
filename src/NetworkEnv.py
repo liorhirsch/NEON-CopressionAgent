@@ -160,7 +160,6 @@ class NetworkEnv:
 
         self.create_fe(device)
         fm = self.feature_extractor.extract_features(self.layer_index - 1)
-        print_flush(f'Extracted FM')
 
         # Compute done
         number_of_layers = len(self.feature_extractor.model_with_rows.all_rows) - 1
