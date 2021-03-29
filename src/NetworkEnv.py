@@ -28,7 +28,7 @@ class NetworkEnv:
     actions_history: List[float]
     max_samples_for_fe: int
 
-    def __init__(self, networks_path, can_do_more_then_one_loop=False, max_samples_for_fe=2500):
+    def __init__(self, networks_path, can_do_more_then_one_loop=False, max_samples_for_fe=1000):
         # self.networks_path = [networks_path[0]]
         self.all_networks = []
         self.can_do_more_then_one_loop = can_do_more_then_one_loop
@@ -112,6 +112,7 @@ class NetworkEnv:
         self.feature_extractor = FeatureExtractor(self.loaded_model.model, data_for_feature_extraction, device)
 
     def step(self, action, is_to_train=True):
+        print_flush(f'step {self.layer_index}')
         """
         Compress the network according to the action
         :param action: compression rate
@@ -159,6 +160,7 @@ class NetworkEnv:
 
         self.create_fe(device)
         fm = self.feature_extractor.extract_features(self.layer_index - 1)
+        print_flush(f'Extracted FM')
 
         # Compute done
         number_of_layers = len(self.feature_extractor.model_with_rows.all_rows)
