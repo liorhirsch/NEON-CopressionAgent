@@ -1,5 +1,6 @@
+import os
 import time
-from os.path import basename
+from os.path import basename, join
 import torch
 import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
@@ -142,6 +143,13 @@ class A2C_Agent_Reinforce():
 
             all_rewards_episodes.append(returns[-1])
             curr_reward = all_rewards_episodes[-1]
+
+            checkpoint_folder = 'checkpoints'
+            if (self.episode_idx + 1) % 100 == 0:
+                if not os.path.exists(checkpoint_folder):
+                    os.mkdir(checkpoint_folder)
+                torch.save(self.critic_model, join(checkpoint_folder, self.test_name + '_critic.pt'))
+                torch.save(self.actor_model, join(checkpoint_folder, self.test_name + '_actor.pt'))
 
             if max_reward_in_all_episodes < v(curr_reward):
                 max_reward_in_all_episodes = v(curr_reward)

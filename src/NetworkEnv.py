@@ -163,7 +163,7 @@ class NetworkEnv:
         print_flush(f'Extracted FM')
 
         # Compute done
-        number_of_layers = len(self.feature_extractor.model_with_rows.all_rows)
+        number_of_layers = len(self.feature_extractor.model_with_rows.all_rows) - 1
         if not self.can_do_more_then_one_loop:
             done = self.layer_index == number_of_layers
         else:
@@ -179,9 +179,7 @@ class NetworkEnv:
         :param max_itres:
         :return:
         """
-        return (len(self.actions_history) >= number_of_layers and all(
-            a == 1 for a in self.actions_history[-number_of_layers:])) or \
-               len(self.actions_history) == max_itres * number_of_layers
+        return len(self.actions_history) == max_itres * number_of_layers
 
     def compute_reward1(self, curr_model, new_model, new_acc, prev_acc, mission_type):
         """
