@@ -65,7 +65,7 @@ class A2C_Agent_Reinforce():
         reward_not_improving = False
         action_to_compression = StaticConf.getInstance().conf_values.action_to_compression_rate
 
-        warmup_len = min(len(self.env.all_networks) * 2, 100)
+        warmup_len = min(len(self.env.all_networks) * 2, 500)
         min_episode_num = len(self.env.all_networks) * 10 + warmup_len
         start_time = time.time()
 
@@ -84,7 +84,6 @@ class A2C_Agent_Reinforce():
 
             # rollout trajectory
             while not done:
-
                 value = self.critic_model(state)
                 dist = self.actor_model(state)
 

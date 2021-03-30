@@ -28,7 +28,7 @@ class NetworkEnv:
     actions_history: List[float]
     max_samples_for_fe: int
 
-    def __init__(self, networks_path, can_do_more_then_one_loop=False, max_samples_for_fe=1000):
+    def __init__(self, networks_path, can_do_more_then_one_loop=False, max_samples_for_fe=2500):
         # self.networks_path = [networks_path[0]]
         self.all_networks = []
         self.can_do_more_then_one_loop = can_do_more_then_one_loop
@@ -167,18 +167,18 @@ class NetworkEnv:
             done = self.layer_index == number_of_layers
         else:
             self.actions_history.append(action)
-            self.layer_index = max(1, self.layer_index % number_of_layers)
+            self.layer_index = max(1, self.layer_index % (number_of_layers + 1))
             done = self.is_done_more_them_one_loop(number_of_layers)
         return fm, reward, done
 
-    def is_done_more_them_one_loop(self, number_of_layers, max_itres=4):
+    def is_done_more_them_one_loop(self, number_of_layers, max_iters=4):
         """
         Checks if all last updates are 0 OR if the agent went through the whole layers max_iterations times
         :param number_of_layers:
-        :param max_itres:
+        :param max_iters:
         :return:
         """
-        return len(self.actions_history) == max_itres * number_of_layers
+        return len(self.actions_history) == max_iters * number_of_layers
 
     def compute_reward1(self, curr_model, new_model, new_acc, prev_acc, mission_type):
         """
