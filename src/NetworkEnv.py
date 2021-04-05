@@ -28,7 +28,7 @@ class NetworkEnv:
     actions_history: List[float]
     max_samples_for_fe: int
 
-    def __init__(self, networks_path, can_do_more_then_one_loop=False, max_samples_for_fe=2500):
+    def __init__(self, networks_path, can_do_more_then_one_loop=False, max_samples_for_fe=3000):
         # self.networks_path = [networks_path[0]]
         self.all_networks = []
         self.can_do_more_then_one_loop = can_do_more_then_one_loop
