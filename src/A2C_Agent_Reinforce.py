@@ -28,7 +28,7 @@ from src.utils import print_flush
 
 class A2C_Agent_Reinforce():
     # , experience_replay_size, priority_alpha, priority_beta_start, priority_beta_frames
-    def __init__(self, models_path, test_name):
+    def __init__(self, models_path, test_name, actor_checkpoint=None, critic_checkpoint=None):
         # Hyper params:
         self.test_name = test_name
         self.discount_factor = 0.9
@@ -43,6 +43,11 @@ class A2C_Agent_Reinforce():
 
         self.actor_model = Actor(self.device, self.num_actions).to(self.device)
         self.critic_model = Critic(self.device, self.num_actions).to(self.device)
+
+        if actor_checkpoint is not None:
+            self.actor_model.load_state_dict(actor_checkpoint)
+            self.critic_model.load_state_dict(critic_checkpoint)
+
         self.actor_optimizer = optim.Adam(self.actor_model.parameters(), self.lr)
         self.critic_optimizer = optim.Adam(self.critic_model.parameters(), self.lr)
 
