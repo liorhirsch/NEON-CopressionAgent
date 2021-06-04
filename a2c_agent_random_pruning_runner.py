@@ -80,11 +80,6 @@ def evaluate_model(mode, base_path):
         2: 0.8,
         3: 0.7,
         4: 0.6,
-        5: 0.5,
-        6: 0.4,
-        7: 0.3,
-        8: 0.2,
-        9: 0.1,
     }
 
     results = DataFrame(columns=['model', 'new_acc', 'origin_acc', 'new_param',
@@ -136,11 +131,6 @@ def main(dataset_name, is_learn_new_layers_only, test_name,
         2: 0.8,
         3: 0.7,
         4: 0.6,
-        5: 0.5,
-        6: 0.4,
-        7: 0.3,
-        8: 0.2,
-        9: 0.1,
     }
 
     base_path = f"./OneDatasetLearning/Classification/{dataset_name}/"
@@ -162,7 +152,6 @@ def extract_args_from_cmd():
     parser.add_argument('--learn_new_layers_only', type=bool, const=True, default=True, nargs='?')
     # parser.add_argument('--split', type=bool, const=True, default=False, nargs='?')
     parser.add_argument('--can_do_more_then_one_loop', type=bool, const=True, default=True, nargs='?')
-    parser.add_argument('--seed', type=int, const=0, default=0, nargs='?')
 
     args = parser.parse_args()
     return args
@@ -171,15 +160,12 @@ def extract_args_from_cmd():
 if __name__ == "__main__":
     args = extract_args_from_cmd()
 
-    torch.manual_seed(args.seed)
-    np.random.seed(args.seed)
-
     all_datasets = glob.glob("./OneDatasetLearning/Classification/*")
 
     for curr_dataset in all_datasets:
         args.dataset_name = os.path.basename(curr_dataset)
         print_flush(args.dataset_name)
         with_loops = '_with_loop' if args.can_do_more_then_one_loop else ""
-        test_name = f'Agent_{args.dataset_name}_seed{args.seed}_Random_pruning_more_actions'
+        test_name = f'Agent_{args.dataset_name}_Random_pruning'
         main(dataset_name=args.dataset_name, is_learn_new_layers_only=args.learn_new_layers_only, test_name=test_name,
              can_do_more_then_one_loop=args.can_do_more_then_one_loop)
