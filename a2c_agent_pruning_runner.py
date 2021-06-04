@@ -130,8 +130,8 @@ def main(dataset_name, test_name):
     }
     base_path = f"./OneDatasetLearning/Classification/{dataset_name}/"
 
-    init_conf_values(actions, num_epoch=10)
-    prune_percentages = [.01, .05, .1, .25, .50, .60, .70, .80, .90]
+    init_conf_values(actions, num_epoch=5)
+    prune_percentages = [.80]
 
     for curr_prune_percentage in prune_percentages:
         mode = 'all'
