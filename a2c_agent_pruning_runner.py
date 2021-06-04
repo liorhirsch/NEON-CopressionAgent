@@ -134,7 +134,7 @@ def main(dataset_name, test_name):
     prune_percentages = [.01, .05, .1, .25, .50, .60, .70, .80, .90]
 
     for curr_prune_percentage in prune_percentages:
-        mode = 'test'
+        mode = 'all'
         results = evaluate_model(mode, base_path, curr_prune_percentage)
         results.to_csv(f"./models/Reinforce_One_Dataset/results_{test_name}_{mode}_pp_{curr_prune_percentage}.csv")
 

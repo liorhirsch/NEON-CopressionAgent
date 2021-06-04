@@ -27,7 +27,7 @@ from src.NetworkEnv import NetworkEnv
 import torch.nn.utils.prune as prune
 
 from src.utils import get_model_layers_str, print_flush, load_models_path, dict2obj, get_model_layers, \
-    add_weight_mask_to_all_layers, set_mask_to_each_layer
+    add_weight_mask_to_all_layers, set_mask_to_each_layer, save_times_csv
 
 
 def init_conf_values(action_to_compression_rate, num_epoch=100, is_learn_new_layers_only=False,
@@ -65,7 +65,7 @@ def get_total_weights_of_layer(l):
     return w[0] * w[1]
 
 
-def evaluate_model(mode, base_path):
+def evaluate_model(mode, base_path, iters):
     models_path = load_models_path(base_path, mode)
     env = NetworkEnv(models_path, StaticConf.getInstance().conf_values.can_do_more_then_one_loop)
 
@@ -126,7 +126,7 @@ def evaluate_model(mode, base_path):
         train_times = 0
         eval_time = 0
 
-        for i in range(10):
+        for i in range(iters):
             train_amc_env = ChannelPruningEnv(model, checkpoint, env.cross_validation_obj,
                                               preserve_ratio=0.2,
                                               batch_size=32,
@@ -185,7 +185,7 @@ def evaluate_model(mode, base_path):
     return results, train_times, eval_time
 
 
-def main(dataset_name, test_name):
+def main(dataset_name, test_name, iters):
     actions = {
         0: 1,
         1: 0.9,
@@ -197,8 +197,8 @@ def main(dataset_name, test_name):
 
     init_conf_values(actions)
 
-    mode = 'test'
-    results, train_times, eval_time = evaluate_model(mode, base_path)
+    mode = 'all'
+    results, train_times, eval_time = evaluate_model(mode, base_path, iters)
     results.to_csv(f"./models/Reinforce_One_Dataset/results_{test_name}_{mode}_amc.csv")
 
     return train_times, eval_time
@@ -210,18 +210,29 @@ def main(dataset_name, test_name):
 def extract_args_from_cmd():
     parser = argparse.ArgumentParser(description='')
     # parser.add_argument('--test_name', type=str)
-    parser.add_argument('--dataset_name', type=str)
+    # parser.add_argument('--dataset_name', type=str)
+    parser.add_argument('--iters', type=int)
+
     args = parser.parse_args()
     return args
 
 
 if __name__ == "__main__":
     args = extract_args_from_cmd()
+    iters = args.iters
     sys.setrecursionlimit(10000)
-    test_name = f'AMC2_10iters_{args.dataset_name}'
+
+    all_datasets = glob.glob("./OneDatasetLearning/Classification/*")
+    all_times = []
+
+    for idx, curr_dataset in enumerate(all_datasets):
+        dataset_name = os.path.basename(curr_dataset)
+        print_flush(f"{dataset_name} {idx} / {len(all_datasets)}")
+        test_name = f'AMC_{iters}_iters_{dataset_name}'
+        now = datetime.now()
+
+        train_times, eval_time = main(dataset_name=args.dataset_name, test_name=test_name)
+        data = np.array([['train', 'eval'], [train_times, eval_time]]).transpose()
+        pd.DataFrame(data, columns=['Dataset', 'time']).to_csv(f"./times/{test_name}.csv")
 
 
-    train_times, eval_time = main(dataset_name=args.dataset_name, test_name=test_name)
-
-    data = np.array([['train', 'eval'], [train_times, eval_time]]).transpose()
-    pd.DataFrame(data, columns=['Dataset', 'time']).to_csv(f"./times/{test_name}.csv")

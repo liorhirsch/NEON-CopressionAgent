@@ -147,7 +147,7 @@ def main(dataset_name, is_learn_new_layers_only, test_name,
     init_conf_values(actions, is_learn_new_layers_only=is_learn_new_layers_only, num_epoch=100,
                      can_do_more_then_one_loop=can_do_more_then_one_loop)
 
-    mode = 'test'
+    mode = 'all'
     results = evaluate_model(mode, base_path)
     results.to_csv(f"./models/Reinforce_One_Dataset/results_{test_name}_{mode}.csv")
 

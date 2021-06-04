@@ -52,7 +52,7 @@ def get_total_weights_of_layer(l):
     return w[0] * w[1]
 
 
-def evaluate_model(mode, base_path):
+def evaluate_model(mode, base_path, iters):
     models_path = load_models_path(base_path, mode)
     env = NetworkEnv(models_path, StaticConf.getInstance().conf_values.can_do_more_then_one_loop)
 
@@ -99,7 +99,7 @@ def evaluate_model(mode, base_path):
 
         model = env.loaded_model.model.cuda()
 
-        for _ in range(4):
+        for _ in range(iters):
             optimizer = PruneAdam(model.named_parameters(), lr=admm_args.lr, eps=admm_args.adam_epsilon)
             train_admm(admm_args, model, device, train_loader, val_loader, optimizer)
 
@@ -107,7 +107,6 @@ def evaluate_model(mode, base_path):
             # test_admm(admm_args, model, device, val_loader)
 
             retrain_admm(admm_args, model, mask, device, train_loader, val_loader, optimizer)
-
 
         total_weights, pruned_weights = print_prune(model)
         pruned_linear_layers = get_model_layers(model)
@@ -145,13 +144,13 @@ def add_weight_mask_to_all_layers(pruned_linear_layers):
         prune.random_unstructured(l, name="weight", amount=0.0)
 
 
-def main(dataset_name, test_name):
+def main(dataset_name, test_name, iters):
     base_path = f"./OneDatasetLearning/Classification/{dataset_name}/"
 
     init_conf_values()
 
-    mode = 'test'
-    results = evaluate_model(mode, base_path)
+    mode = 'all'
+    results = evaluate_model(mode, base_path, iters)
     results.to_csv(f"./models/Reinforce_One_Dataset/results_{test_name}_{mode}_admm.csv")
 
     # mode = 'train'
@@ -161,7 +160,7 @@ def main(dataset_name, test_name):
 
 def extract_args_from_cmd():
     parser = argparse.ArgumentParser(description='')
-    # parser.add_argument('--test_name', type=str)
+    parser.add_argument('--iters', type=int)
     # parser.add_argument('--dataset_name', type=str)
     args = parser.parse_args()
     return args
@@ -169,15 +168,16 @@ def extract_args_from_cmd():
 
 if __name__ == "__main__":
     args = extract_args_from_cmd()
+    iters = args.iters
     all_datasets = glob.glob("./OneDatasetLearning/Classification/*")
     all_times = []
 
     for idx, curr_dataset in enumerate(all_datasets):
         dataset_name = os.path.basename(curr_dataset)
         print_flush(f"{dataset_name} {idx} / {len(all_datasets)}")
-        test_name = f'ADMM2_4iters_lower_precentages_{dataset_name}'
+        test_name = f'ADMM_{iters}_iters_{dataset_name}'
         now = datetime.now()
-        main(dataset_name=dataset_name, test_name=test_name)
+        main(dataset_name=dataset_name, test_name=test_name, iters=iters)
         total_time = (datetime.now() - now).total_seconds()
         all_times.append(total_time)
 
