@@ -109,7 +109,7 @@ def evaluate_model(mode, base_path, iters):
             'output': './logs',
             'debug': False,
             'init_w': 0.003,
-            'train_episode': 800,
+            'train_episode': 300,
             'epsilon': 50000,
             'seed': 1,
             'n_gpu': 1,
@@ -195,7 +195,7 @@ def main(dataset_name, test_name, iters):
     }
     base_path = f"./OneDatasetLearning/Classification/{dataset_name}/"
 
-    init_conf_values(actions,num_epoch=10)
+    init_conf_values(actions,num_epoch=5)
 
     mode = 'all'
     results, train_times, eval_time = evaluate_model(mode, base_path, iters)

@@ -76,7 +76,7 @@ def evaluate_model(mode, base_path, iters):
             'l1': True,
             'l2': False,
             'num_pre_epochs': 10,
-            'num_epochs': 50,
+            'num_epochs': StaticConf.getInstance().conf_values.num_epoch,
             'num_re_epochs': 10,
             'lr': 1e-3,
             'adam_epsilon': 1e-8,
@@ -145,9 +145,10 @@ def add_weight_mask_to_all_layers(pruned_linear_layers):
 
 
 def main(dataset_name, test_name, iters):
+    print_flush(f"ADMM {iters} iters")
     base_path = f"./OneDatasetLearning/Classification/{dataset_name}/"
 
-    init_conf_values(num_epoch=10)
+    init_conf_values(num_epoch=5)
 
     mode = 'all'
     results = evaluate_model(mode, base_path, iters)
