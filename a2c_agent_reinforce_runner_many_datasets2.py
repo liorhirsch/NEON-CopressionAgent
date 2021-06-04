@@ -33,7 +33,7 @@ def init_conf_values(action_to_compression_rate, num_epoch=100, is_learn_new_lay
     print_flush(f"device name is {torch.cuda.get_device_name(0)}")
 
     num_actions = len(action_to_compression_rate)
-    MAX_TIME_TO_RUN = 60 * 60 * 24 * 3
+    MAX_TIME_TO_RUN = 60 * 60 * 24 * 1.5
     cv = ConfigurationValues(device, action_to_compression_rate=action_to_compression_rate, num_actions=num_actions,
                              num_epoch=num_epoch,
                              is_learn_new_layers_only=is_learn_new_layers_only,
