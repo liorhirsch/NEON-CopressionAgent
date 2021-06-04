@@ -129,7 +129,7 @@ def evaluate_model(mode, base_path, iters):
         for i in range(iters):
             train_amc_env = ChannelPruningEnv(model, checkpoint, env.cross_validation_obj,
                                               preserve_ratio=0.2,
-                                              batch_size=32,
+                                              batch_size=128,
                                               args=amc_args, export_model=False, use_new_input=False)
 
             now = datetime.now()
@@ -210,7 +210,7 @@ def main(dataset_name, test_name, iters):
 def extract_args_from_cmd():
     parser = argparse.ArgumentParser(description='')
     # parser.add_argument('--test_name', type=str)
-    # parser.add_argument('--dataset_name', type=str)
+    parser.add_argument('--dataset_name', type=str)
     parser.add_argument('--iters', type=int)
 
     args = parser.parse_args()
@@ -225,16 +225,16 @@ if __name__ == "__main__":
 
     all_datasets = glob.glob("./OneDatasetLearning/Classification/*")
     all_times = []
-    print_flush(f"AMC {iters} iters")
 
-    for idx, curr_dataset in enumerate(all_datasets):
-        dataset_name = os.path.basename(curr_dataset)
-        print_flush(f"{dataset_name} {idx} / {len(all_datasets)}")
-        test_name = f'AMC_{iters}_iters_{dataset_name}'
-        now = datetime.now()
+    dataset_name = args.dataset_name
 
-        train_times, eval_time = main(dataset_name=dataset_name, test_name=test_name, iters=iters)
-        data = np.array([['train', 'eval'], [train_times, eval_time]]).transpose()
-        pd.DataFrame(data, columns=['Dataset', 'time']).to_csv(f"./times/{test_name}.csv")
+    print_flush(f"AMC {iters} iters {dataset_name}")
+
+    test_name = f'AMC_{iters}_iters_{dataset_name}'
+    now = datetime.now()
+
+    train_times, eval_time = main(dataset_name=dataset_name, test_name=test_name, iters=iters)
+    data = np.array([['train', 'eval'], [train_times, eval_time]]).transpose()
+    pd.DataFrame(data, columns=['Dataset', 'time']).to_csv(f"./times/{test_name}.csv")
 
 
