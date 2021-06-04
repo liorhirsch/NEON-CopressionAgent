@@ -23,7 +23,7 @@ from src.utils import print_flush, load_models_path, dict2obj, get_model_layers,
 os.environ['MKL_THREADING_LAYER'] = 'GNU'
 
 
-def init_conf_values(action_to_compression_rate=[], num_epoch=100, is_learn_new_layers_only=False,
+def init_conf_values(action_to_compression_rate=[], num_epoch=10, is_learn_new_layers_only=False,
                      total_allowed_accuracy_reduction=1, can_do_more_then_one_loop=False):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     num_actions = len(action_to_compression_rate)
@@ -147,7 +147,7 @@ def add_weight_mask_to_all_layers(pruned_linear_layers):
 def main(dataset_name, test_name, iters):
     base_path = f"./OneDatasetLearning/Classification/{dataset_name}/"
 
-    init_conf_values()
+    init_conf_values(num_epoch=10)
 
     mode = 'all'
     results = evaluate_model(mode, base_path, iters)

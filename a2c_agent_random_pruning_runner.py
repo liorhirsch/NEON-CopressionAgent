@@ -134,7 +134,7 @@ def main(dataset_name, is_learn_new_layers_only, test_name,
     }
 
     base_path = f"./OneDatasetLearning/Classification/{dataset_name}/"
-    init_conf_values(actions, is_learn_new_layers_only=is_learn_new_layers_only, num_epoch=100,
+    init_conf_values(actions, is_learn_new_layers_only=is_learn_new_layers_only, num_epoch=10,
                      can_do_more_then_one_loop=can_do_more_then_one_loop)
 
     mode = 'all'

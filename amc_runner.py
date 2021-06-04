@@ -30,7 +30,7 @@ from src.utils import get_model_layers_str, print_flush, load_models_path, dict2
     add_weight_mask_to_all_layers, set_mask_to_each_layer, save_times_csv
 
 
-def init_conf_values(action_to_compression_rate, num_epoch=100, is_learn_new_layers_only=False,
+def init_conf_values(action_to_compression_rate, num_epoch=10, is_learn_new_layers_only=False,
                      total_allowed_accuracy_reduction=1, can_do_more_then_one_loop=False):
     if not torch.cuda.is_available():
         sys.exit("GPU was not allocated!!!!")
@@ -195,7 +195,7 @@ def main(dataset_name, test_name, iters):
     }
     base_path = f"./OneDatasetLearning/Classification/{dataset_name}/"
 
-    init_conf_values(actions)
+    init_conf_values(actions,num_epoch=10)
 
     mode = 'all'
     results, train_times, eval_time = evaluate_model(mode, base_path, iters)
