@@ -223,6 +223,8 @@ if __name__ == "__main__":
     args = extract_args_from_cmd()
     all_times = []
 
+    print_flush(f"LAP {args.iters} iters")
+
     all_datasets = glob.glob("./OneDatasetLearning/Classification/*")
     for idx, curr_dataset in enumerate(all_datasets):
         dataset_name = os.path.basename(curr_dataset)

@@ -218,12 +218,14 @@ def extract_args_from_cmd():
 
 
 if __name__ == "__main__":
+
     args = extract_args_from_cmd()
     iters = args.iters
     sys.setrecursionlimit(10000)
 
     all_datasets = glob.glob("./OneDatasetLearning/Classification/*")
     all_times = []
+    print_flush(f"AMC {iters} iters")
 
     for idx, curr_dataset in enumerate(all_datasets):
         dataset_name = os.path.basename(curr_dataset)

@@ -173,6 +173,8 @@ if __name__ == "__main__":
     all_datasets = glob.glob("./OneDatasetLearning/Classification/*")
     all_times = []
 
+    print_flush(f"LAP {iters} iters")
+
     for idx, curr_dataset in enumerate(all_datasets):
         dataset_name = os.path.basename(curr_dataset)
         print_flush(f"{dataset_name} {idx} / {len(all_datasets)}")

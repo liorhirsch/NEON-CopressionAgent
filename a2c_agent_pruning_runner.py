@@ -155,6 +155,7 @@ def extract_args_from_cmd():
 
 
 if __name__ == "__main__":
+    print_flush("Pruning")
     args = extract_args_from_cmd()
     all_datasets = glob.glob("./OneDatasetLearning/Classification/*")
     all_times = []
