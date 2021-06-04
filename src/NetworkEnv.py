@@ -225,8 +225,15 @@ class NetworkEnv:
 
         return reward
 
-    def calc_num_parameters(self, model):
-        return sum(p.numel() for p in model.parameters())
+    def calc_num_parameters(self, model, is_prune=False):
+        if not is_prune:
+            return sum(p.numel() for p in model.parameters())
+        else:
+            pruned_params = np.sum(list(
+                map(lambda x: (x.weight_mask == 0).cpu().detach().sum(),
+                    filter(lambda x: hasattr(x, 'weight_mask'), model.modules()))))
+            original_params = self.calc_num_parameters(model)
+            return original_params - pruned_params
 
     def build_parameters_to_freeze(self, new_model_with_rows):
         layers_to_freeze = np.concatenate(new_model_with_rows.all_rows[self.layer_index - 1:self.layer_index + 1])

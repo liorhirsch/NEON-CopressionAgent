@@ -69,6 +69,9 @@ def evaluate_model(mode, base_path, agent):
         done = False
 
         t_start = time.time()
+        origin_lh = env.create_learning_handler(env.loaded_model.model)
+        origin_acc = origin_lh.evaluate_model()
+        origin_params = env.calc_num_parameters(env.loaded_model.model, StaticConf.getInstance().conf_values.prune)
 
         while not done:
             # dist, value = agent.actor_critic_model(state)
@@ -81,14 +84,11 @@ def evaluate_model(mode, base_path, agent):
             state = next_state
 
         t_end = time.time()
+
         new_lh = env.create_learning_handler(env.current_model)
-        origin_lh = env.create_learning_handler(env.loaded_model.model)
-
         new_acc = new_lh.evaluate_model()
-        origin_acc = origin_lh.evaluate_model()
+        new_params = env.calc_num_parameters(env.current_model, StaticConf.getInstance().conf_values.prune)
 
-        new_params = env.calc_num_parameters(env.current_model)
-        origin_params = env.calc_num_parameters(env.loaded_model.model)
 
         model_name = env.all_networks[env.net_order[env.curr_net_index - 1]][1]
 
