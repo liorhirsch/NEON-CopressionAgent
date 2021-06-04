@@ -231,7 +231,7 @@ if __name__ == "__main__":
         test_name = f'AMC_{iters}_iters_{dataset_name}'
         now = datetime.now()
 
-        train_times, eval_time = main(dataset_name=args.dataset_name, test_name=test_name)
+        train_times, eval_time = main(dataset_name=dataset_name, test_name=test_name)
         data = np.array([['train', 'eval'], [train_times, eval_time]]).transpose()
         pd.DataFrame(data, columns=['Dataset', 'time']).to_csv(f"./times/{test_name}.csv")
 
