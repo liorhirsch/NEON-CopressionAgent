@@ -31,6 +31,7 @@ class Dataset(torch.utils.data.Dataset):
 
 class ClassificationHandler(BasicHandler):
     def evaluate_model(self, validation=False) -> float:
+        self.model.eval()
         cv_obj = self.cross_validation_obj
         x_cv, y_cv = (cv_obj.x_val, cv_obj.y_val) if validation else (cv_obj.x_test, cv_obj.y_test)
         self.model.cuda()

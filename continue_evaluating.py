@@ -149,10 +149,11 @@ def main(fold, is_learn_new_layers_only, test_name,
     test_models_path = flatten(test_models_path)
 
     checkpoint_path = r'checkpoints'
+    pruned = "pruned" if prune else ""
     actor_chkpt_path = \
-    glob.glob(join(checkpoint_path, f"*acc_reduction_{total_allowed_accuracy_reduction}*fold{fold}_actor*"))[0]
+    glob.glob(join(checkpoint_path, f"*acc_reduction_{total_allowed_accuracy_reduction}*{pruned}*fold{fold}_actor*"))[0]
     critic_chkpt_path = \
-    glob.glob(join(checkpoint_path, f"*acc_reduction_{total_allowed_accuracy_reduction}*fold{fold}_critic*"))[0]
+    glob.glob(join(checkpoint_path, f"*acc_reduction_{total_allowed_accuracy_reduction}*{pruned}*fold{fold}_critic*"))[0]
 
     actor_checkpoint = torch.load(actor_chkpt_path).state_dict()
     critic_checkpoint = torch.load(critic_chkpt_path).state_dict()
@@ -191,8 +192,10 @@ def extract_args_from_cmd():
     parser = argparse.ArgumentParser(description='')
     # parser.add_argument('--test_name', type=str)
     # parser.add_argument('--dataset_name', type=str)
+    parser.add_argument('--can_do_more_then_one_loop', type=bool, const=True, default=False, nargs='?')
     parser.add_argument('--allowed_reduction_acc', type=int, nargs='?')
     parser.add_argument('--fold', type=int, nargs='?')
+    parser.add_argument('--prune', type=bool, const=True, default=False, nargs='?')
 
     args = parser.parse_args()
     return args
@@ -202,8 +205,10 @@ if __name__ == "__main__":
     print_flush("Starting scripttt")
     args = extract_args_from_cmd()
     print_flush(args)
+    pruned = '_pruned' if args.prune else ""
+    with_loops = '_with_loop' if args.can_do_more_then_one_loop else ""
     fold = f'_fold{args.fold}'
-    test_name = f'All_Datasets_Agent_learn_new_layers_only_{True}_acc_reduction_{args.allowed_reduction_acc}{True}{fold}'
+    test_name = f'All_Datasets_Agent_learn_new_layers_only_{True}_acc_reduction_{args.allowed_reduction_acc}{with_loops}{pruned}{fold}'
     print_flush(test_name)
     main(fold=args.fold, test_name=test_name, total_allowed_accuracy_reduction=args.allowed_reduction_acc,
-         is_learn_new_layers_only=True, can_do_more_then_one_loop=True, prune=False)
+         is_learn_new_layers_only=True, can_do_more_then_one_loop=args.can_do_more_then_one_loop, prune=args.prune)
