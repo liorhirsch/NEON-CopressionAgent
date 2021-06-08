@@ -166,14 +166,14 @@ def main(fold, is_learn_new_layers_only, test_name,
     for d in train_datasets:
         mode = 'test'
 
-        if len(glob.glob(f"./models/Reinforce_One_Dataset/*{d}*acc_reduction_{total_allowed_accuracy_reduction}*fold{fold}*{mode}_trained_dataset*")) == 0:
+        if len(glob.glob(f"./models/Reinforce_One_Dataset/*{d}*acc_reduction_{total_allowed_accuracy_reduction}*{pruned}*fold{fold}*{mode}_trained_dataset*")) == 0:
             results = evaluate_model(mode, join(base_path, d), agent)
             results.to_csv(f"./models/Reinforce_One_Dataset/results_{d}_{test_name}_{mode}_trained_dataset.csv")
         else:
             print_flush(f'Skipped {d} {mode}_trained_dataset')
 
         mode = 'train'
-        if len(glob.glob(f"./models/Reinforce_One_Dataset/*{d}*acc_reduction_{total_allowed_accuracy_reduction}*fold{fold}*{mode}_trained_dataset*")) == 0:
+        if len(glob.glob(f"./models/Reinforce_One_Dataset/*{d}*acc_reduction_{total_allowed_accuracy_reduction}*{pruned}*fold{fold}*{mode}_trained_dataset*")) == 0:
             results = evaluate_model(mode, join(base_path, d), agent)
             results.to_csv(f"./models/Reinforce_One_Dataset/results_{d}_{test_name}_{mode}_trained_dataset.csv")
         else:
@@ -182,7 +182,7 @@ def main(fold, is_learn_new_layers_only, test_name,
     print_flush("Starting evaluate test datasets")
     for d in test_datasets:
         mode = 'all'
-        if len(glob.glob(f"./models/Reinforce_One_Dataset/*{d}*acc_reduction_{total_allowed_accuracy_reduction}*fold{fold}*{mode}_unseen_dataset*")) == 0:
+        if len(glob.glob(f"./models/Reinforce_One_Dataset/*{d}*acc_reduction_{total_allowed_accuracy_reduction}*{pruned}*fold{fold}*{mode}_unseen_dataset*")) == 0:
             results = evaluate_model(mode, join(base_path, d), agent)
             results.to_csv(f"./models/Reinforce_One_Dataset/results_{d}_{test_name}_{mode}_unseen_dataset.csv")
         else:
