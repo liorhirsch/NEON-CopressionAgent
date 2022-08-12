@@ -1,5 +1,8 @@
 # NEON - Multi Neural Network Compression Agent
 
+This repository is the official implementation of NEON from "Multi-objective pruning of dense neural networks using deep reinforcement learning
+". [https://doi.org/10.1016/j.neunet.2022.06.018](https://www.sciencedirect.com/science/article/abs/pii/S0020025522008222)
+
 ## Preparing the workstation
 This project is using `conda` as the packe manager. 
 In order to create a new environment with the required packages you should run th following command:
@@ -65,4 +68,19 @@ a2c_agent_reinforce_runner.py --dataset_name=[Insert here the dataset name] --le
 a2c_agent_reinforce_runner.py --dataset_name=[Insert here the dataset name] --learn_new_layers_only=True --allowed_reduction_acc=50
 ``` 
 
+## Citation
+If you found this work useful, please cite the following related article:
+```
+title = {Multi-objective pruning of dense neural networks using deep reinforcement learning},
+journal = {Information Sciences},
+volume = {610},
+pages = {381-400},
+year = {2022},
+issn = {0020-0255},
+doi = {https://doi.org/10.1016/j.ins.2022.07.134},
+url = {https://www.sciencedirect.com/science/article/pii/S0020025522008222},
+author = {Lior Hirsch and Gilad Katz},
+keywords = {Pruning, Deep reinforcement learning},
+abstract = {Network pruning aims to reduce the inference cost of large models and enable neural architectures to run on end devices such as mobile phones. We present NEON, a novel iterative pruning approach using deep reinforcement learning (DRL). While most reinforcement learning-based pruning solutions only analyze the one network they aim to prune, we train a DRL agent on a large set of randomly-generated architectures. Therefore, our proposed solution is more generic and less prone to overfitting. To avoid the long-running times often required to train DRL models for each new dataset, we train NEON offline on multiple datasets and then apply it to additional datasets without additional training. This setup makes NEON more efficient than other DRL-based pruning methods. Additionally, we propose a novel reward function that enables users to clearly define their pruning/performance trade-off preferences. Our evaluation, conducted on a set of 28 diverse datasets, shows that the proposed method significantly outperforms recent top-performing solutions in the pruning of fully-connected networks. Specifically, our top configuration reduces the average size of the pruned architecture by ×24.59, compared to ×13.26 by the leading baseline, while actually improving accuracy by 0.5%.}
+```
 
